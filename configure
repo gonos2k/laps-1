@@ -1605,7 +1605,8 @@ $FC
 EOF
 if test $? -eq 0
 then
-    FFLAGS="$FFLAGS -fd-lines-as-comments -ffree-line-length-none"
+    FFLAGS="$FFLAGS -fd-lines-as-comments -ffree-line-length-none -finit-local-zero"
+    DBFLAGS="$DBFLAGS -fcheck=all -Wall"
 fi
 
 
