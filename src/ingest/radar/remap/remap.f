@@ -295,8 +295,8 @@ c
 
 !     Misc Local variables
 
-      character string_time(9)
-      character full_fname(91)
+      character*9 string_time
+      character*91 full_fname
       integer initial_ray                ! flag for first ray in volume 
       integer alls_well, knt_bad_stat
       integer i_angle, past_angle
@@ -336,6 +336,8 @@ c
       b_missing_data = 255. ! flag value (corresponds to an unsigned integer)
 
       i_tilt_proc_curr = 1
+
+      write(6,*)' string_time length is ',len(string_time)
 
       call radar_init(i_radar,path_to_radar,path_to_vrc,itimes         ! I
      1               ,b_missing_data                                   ! I
@@ -505,7 +507,8 @@ c
 
             if(n_rays .eq. n_rays/10 * 10)then
 !             write(6,*)'  Good status received'
-              write(6,*)'  i_angle, i_tilt = ', i_angle, i_tilt
+              write(6,*)'  i_angle1, i_tilt = ', i_angle, i_tilt
+     1               ,len(string_time)
             endif
 
             if ( initial_ray .eq. 1 ) then
