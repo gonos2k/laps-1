@@ -147,8 +147,7 @@ c
           filename = static_dir(1:len_dir)//'vxx/'
      1             //'gate_elev_to_projran_lut.'//c4_radarname
           write(6,*)' Reading file: ',filename
-          open(11,file=filename,form='unformatted'
-     1         ,access='direct',recl=irecl_lutge,status='old',err=90)       
+          open(11,file=filename,form='unformatted',status='old',err=90)
           read(11,err=90)gate_elev_to_projran_lut
           close(11)
           goto 110
@@ -176,8 +175,7 @@ c
       ENDDO
 
       if(l_readwrite_lut)then ! Write lut
-          open(12,file=filename,form='unformatted',access='direct'
-     1               ,recl=irecl_lutge,status='unknown')
+          open(12,file=filename,form='unformatted')
           write(12)gate_elev_to_projran_lut
           close(12)
       endif
@@ -191,8 +189,7 @@ c
           filename = static_dir(1:len_dir)//'vxx/'
      1             //'gate_elev_to_z_lut.'//c4_radarname
           write(6,*)' Reading file: ',filename
-          open(11,file=filename,form='unformatted',access='direct'
-     1                           ,recl=irecl_lutge,status='old',err=190)
+          open(11,file=filename,form='unformatted',status='old',err=190)
           read(11,err=190)gate_elev_to_z_lut
           close(11)
           goto 210
@@ -226,8 +223,7 @@ c
   200 CONTINUE
 
       if(l_readwrite_lut)then ! Write lut
-          open(12,file=filename,form='unformatted',access='direct'
-     1               ,recl=irecl_lutge,status='unknown')
+          open(12,file=filename,form='unformatted')
           write(12)gate_elev_to_z_lut
           close(12)
       endif
@@ -241,8 +237,7 @@ c
           filename = static_dir(1:len_dir)//'vxx/'
      1             //'azran_to_ijgrid_lut.'//c4_radarname
           write(6,*)' Reading file: ',filename
-          open(11,file=filename,form='unformatted',access='direct'
-     1                           ,recl=irecl_lutar,status='old',err=290)
+          open(11,file=filename,form='unformatted',status='old',err=290)
           read(11,err=290)azran_to_igrid_lut,azran_to_jgrid_lut
           close(11)
           goto 310
@@ -316,8 +311,7 @@ c
   300 CONTINUE
 
       if(l_readwrite_lut)then ! Write lut
-          open(12,file=filename,form='unformatted',access='direct'
-     1               ,recl=irecl_lutar,status='unknown')
+          open(12,file=filename,form='unformatted')
           write(12)azran_to_igrid_lut,azran_to_jgrid_lut
           close(12)
       endif
