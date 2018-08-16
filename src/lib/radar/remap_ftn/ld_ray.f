@@ -156,7 +156,7 @@ c     Reflectivity
 
         i = nint(float(igate_88d) * ratio_ref)
 
-        if(i .le. ngates_remap)then
+        if(i .le. ngates_remap .and. i .ge. 1)then
             IF (b_ref_cmn(igate_88d,i_ray) .ne. b_missing_cmn) THEN
               reflect(i) = 0.5*float(b_ref_cmn(igate_88d,i_ray))
 !           ELSE
