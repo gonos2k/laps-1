@@ -105,7 +105,7 @@ contains
     character(len=*) :: text
     integer :: cols,rows
     integer :: i,j
-    integer :: maxvalue
+    integer :: maxvalue,maxr,maxg,maxb
  
     ! Open File   
     open(unit=100, file=trim(text)//".ppm", status='unknown')
@@ -120,10 +120,11 @@ contains
     write(100,'( i6, 1x, i6 )') cols, rows
     
     ! Write Maximum Value
-    maxvalue = max( maxval(maxval(R,dim=1),dim=1)&
-                   ,maxval(maxval(G,dim=1),dim=1)&
-                   ,maxval(maxval(B,dim=1),dim=1))
-    write(6,*)' Image maxvalue is ',maxvalue
+    maxr = maxval(maxval(R,dim=1),dim=1)
+    maxg = maxval(maxval(G,dim=1),dim=1)
+    maxb = maxval(maxval(B,dim=1),dim=1)
+    maxvalue = max(maxr,maxg,maxb)
+    write(6,*)' Image maxvalue is ',maxr,maxg,maxb,maxvalue
 
 !   Set brightness scaling in the image at a floor value
 !   Image will always have a max >= 85 counts
