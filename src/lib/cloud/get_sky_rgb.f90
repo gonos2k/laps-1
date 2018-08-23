@@ -19,7 +19,7 @@
                    minalt,maxalt,minazi,maxazi, &                       ! I
                    twi_0,horz_dep,solalt_limb_true, &                   ! I
                    moon_alt,moon_az,moon_mag,corr1_in,exposure, &       ! I
-                   sky_rgb,sky_sprad,sky_reflectance)                   ! O
+                   elong_a,sky_rgb,sky_sprad,sky_reflectance)           ! O
 
         use mem_namelist, ONLY: r_missing_data,earth_radius,aero_scaleht,redp_lvl,fcterm,ssa,o3_du,h_o3,d_o3,aod_ha,angstrom_exp_a
         use cloud_rad ! , ONLY: ghi_zen_toa
@@ -430,7 +430,7 @@
             azid1 = int(sol_az)  ; azid2 = int(sol_az) ! high custom
             azid1 = 305. ; azid2 = 330. ! test custom
         else
-            azid2 = azid1             
+!           azid2 = azid1             
         endif
         if(mode_aero_cld .gt. 1)then
             azid1 = 270.  ; azid2 = 0. ! aero custom
@@ -547,7 +547,7 @@
         enddo ! i
         enddo ! j
 
-        if(htmsl .gt. 1000000e3)then ! high custom
+        if(htmsl .gt. 20e3)then ! high custom
             idebug_a(:,:) = 0
             iazi_debug = ((nj-1)*nint(azid1))/360 + 1 ! 90 deg azi
             idebug_a(1:ni/4:5,iazi_debug) = 1
