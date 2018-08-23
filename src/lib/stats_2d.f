@@ -1,7 +1,7 @@
 cdis
 c
 c
-        subroutine stats_2d(ni,nj,x,y,a_t,b_t,xbar,ybar,r
+        subroutine stats_2d(ni,nj,x,y,wt_a,a_t,b_t,xbar,ybar,r
      1                     ,bias,std,badflag,istatus)
 c
 c*******************************************************************************
@@ -14,6 +14,7 @@ c       as well as mean of each array, bias, rms
 c
 c       Changes:
 c               P.A. Stamus     12-01-88        Original (from J. McGinley)
+c               Steve Albers    2018            Added weights
 c
 c       Inputs/Outputs:
 c
@@ -22,6 +23,7 @@ c         ----------   ----------  ----- -------------
 c          num_sfc         I         I    Number of surface stations.
 c          x               RA        I    
 c          y               RA        I    
+c          wt_a            RA        I    weights
 c          b_t             R         O    intercept (y = ax + b)
 c          a_t             R         O    slope
 c          xbar            R         O    Mean value of the stations.
@@ -33,7 +35,7 @@ c       1. Units are not changed in this routine.
 c
 c*******************************************************************************
 c
-        real x(ni,nj), y(ni,nj)           
+        real x(ni,nj), y(ni,nj), wt_a(ni,nj)           
 
 c
 c
@@ -62,11 +64,12 @@ c
           if(x(i,j).eq.badflag .or. y(i,j).eq.badflag) go to 10
 !         write(6,5)i,y(i,j),x(i,j)
 5         format(i6,2f8.3)
-          sumxy = (x(i,j) * y(i,j)) + sumxy
-          sumx = x(i,j) + sumx
-          sumx2 = (x(i,j) * x(i,j)) + sumx2
-          sumy = y(i,j) + sumy
-          cnt = cnt + 1.
+          wt = wt_a(i,j)
+          sumxy = (x(i,j) * y(i,j)) * wt + sumxy
+          sumx = x(i,j) * wt + sumx
+          sumx2 = (x(i,j) * x(i,j)) * wt + sumx2
+          sumy = y(i,j) * wt + sumy
+          cnt = cnt + wt
           istatus = 1
  10       continue
         enddo
@@ -108,8 +111,9 @@ c
         do i=1,ni
         do j=1,nj
             if(x(i,j).ne.badflag .and. y(i,j).ne.badflag) then     
-                cnt = cnt + 1.
-                sumsq = sumsq + (y(i,j)-x(i,j))**2
+                wt = wt_a(i,j)
+                cnt = cnt + wt
+                sumsq = sumsq + wt * (y(i,j)-x(i,j))**2
             endif
         enddo ! i
         enddo ! i
@@ -136,9 +140,10 @@ c
         do i=1,ni
         do j=1,nj
             if(x(i,j).ne.badflag .and. y(i,j).ne.badflag) then     
-                sum1 = sum1 + ( (x(i,j) - xbar) * (y(i,j) - ybar) )
-                sum2 = sum2 + (x(i,j) - xbar)**2
-                sum3 = sum3 + (y(i,j) - ybar)**2
+                wt = wt_a(i,j)
+                sum1 = sum1 + wt * ( (x(i,j) - xbar) * (y(i,j) - ybar) )
+                sum2 = sum2 + wt * (x(i,j) - xbar)**2
+                sum3 = sum3 + wt * (y(i,j) - ybar)**2
             endif
         enddo ! i
         enddo ! i
