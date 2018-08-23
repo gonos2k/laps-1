@@ -26,7 +26,7 @@
      1                     ,mode_cloud_mask,camera_cloud_mask       ! I
      1                     ,iloop                                   ! I
      1                     ,cloud_od,dist_2_topo                    ! O
-     1                     ,camera_rgbf                             ! O
+     1                     ,camera_rgb                              ! O
      1                     ,sky_rgb_cyl,correlation,istatus)        ! O
 
         use mem_allsky
@@ -81,7 +81,9 @@
         real lon(NX_L,NY_L)
         real camera_rgb(nc,minalt:maxalt,minazi:maxazi)
         real camera_rgbf(nc,minalt:maxalt,minazi:maxazi)
-        real correlation(nc)
+        real wt_a(minalt:maxalt,minazi:maxazi)
+        real elong_a(minalt:maxalt,minazi:maxazi)
+        real correlation(nc),xbar_a(nc),ybar_a(nc)
         integer camera_cloud_mask(minalt:maxalt,minazi:maxazi)
         integer sim_cloud_mask(minalt:maxalt,minazi:maxazi)
         integer diff_cloud_mask(minalt:maxalt,minazi:maxazi)
@@ -575,21 +577,22 @@
      1                    ,swi_obs           ! sw at ground below observer 
      1                    ,topo_swi,topo_albedo,gtic,dtic,btic,emic
      1                    ,topo_albedo_2d(:,isound,jsound)
-     1                    ,topo_lat_r4,topo_lon_r4,topo_lf,topo_sc      ! I
+     1                    ,topo_lat_r4,topo_lon_r4,topo_lf,topo_sc       ! I
      1                    ,aod_2_cloud,aod_2_topo,aod_ill,aod_ill_dir
      1                    ,aod_tot
      1                    ,dist_2_topo,topo_solalt,topo_solazi
      1                    ,trace_solalt,eobsc_sky
-     1                    ,alt_a_roll,azi_a_roll                        ! I   
+     1                    ,alt_a_roll,azi_a_roll                         ! I   
      1                    ,ni_cyl,nj_cyl,alt_scale,azi_scale  
-     1                    ,solar_alt,solar_az                           ! I
-     1                    ,solar_lat,solar_lon,r_au                     ! I
-     1                    ,minalt,maxalt,minazi,maxazi                  ! I
+     1                    ,solar_alt,solar_az                            ! I
+     1                    ,solar_lat,solar_lon,r_au                      ! I
+     1                    ,minalt,maxalt,minazi,maxazi                   ! I
      1                    ,twi_0,horz_dep
      1                    ,solalt_limb_true
      1                    ,alm,azm,moon_mag  ! moon alt/az/mag
      1                    ,corr1_in,exposure
-     1                    ,sky_rgb_cyl,sky_sprad,sky_reflectance)       ! O   
+     1                    ,elong_a                                       ! O
+     1                    ,sky_rgb_cyl,sky_sprad,sky_reflectance)        ! O   
 
 !             Add bounds and scaling to rgb values. Final image should have
 !             either a max of 128 or a green average of 64, whichever represents
@@ -748,6 +751,9 @@
                     else
                       camera_rgbf(:,ialt,jazi) = r_missing_data
                     endif
+                    if(elong_a(ialt,jazi) .lt. 3.0)then
+                      camera_rgbf(:,ialt,jazi) = r_missing_data
+                    endif
                   enddo ! jazi
                 enddo ! ialt
               else
@@ -763,13 +769,26 @@
                 return
               endif
 
+!             We have a choice of doing the weighting by setting pixels
+!             to missing, or by passing in variable weights
               write(6,*)' Performing correlation calculation (stats_2d)'
+              wt_a(:,:) = 1.0
               do ic = 1,nc
                 call stats_2d(maxalt-minalt+1,maxazi-minazi+1
      1                       ,camera_rgbf(ic,:,:),sky_rgb_cyl(ic-1,:,:)
-     1                       ,a_t,b_t,xbar,ybar,correlation(ic)
-     1                       ,bias,std,r_missing_data,istatus)
+     1                       ,wt_a,a_t,b_t,xbar_a(ic),ybar_a(ic)
+     1                       ,correlation(ic),bias,std
+     1                       ,r_missing_data,istatus)
               enddo
+
+              corr_scaling = sum(ybar_a(:)) / sum(xbar_a(:))
+              write(6,*)' correlation scaling (sim/cam) is '
+     1                  ,corr_scaling
+              if(corr_scaling .lt. 1.0)then
+                write(6,*)' brightening simulated image to match camera'
+                sky_rgb_cyl(:,:,:) =
+     1                 min(sky_rgb_cyl(:,:,:)/corr_scaling,255.)
+              endif
 
               I4_elapsed = ishow_timer()
   
@@ -1045,7 +1064,6 @@
        
         return
         end
-      
 
         subroutine drape_topo_albedo(
      1                 topo_lat,topo_lon                             ! I
@@ -1073,7 +1091,7 @@
 
         character*255 directory, file_dc, file
         character*10  c10_fname /'nest7grid'/
-        character*20 adum,ctype
+        character*20 adum,ctype,cropname
         integer u,u_out
         logical l_there_dc
         integer counts(3)
@@ -1083,29 +1101,23 @@
 
         call get_directory('static',directory,len_dir)
 
-        do itile = 1,4
+        do itile = 1,100
         
-          if(itile .eq. 1)then
-            file_dc=trim(directory)//'vhires_dc_crop1.ppm'       
-          elseif(itile .eq. 2)then
-            file_dc=trim(directory)//'vhires_dc_crop2.ppm'       
-          elseif(itile .eq. 3)then
-            file_dc=trim(directory)//'vhires_dc_crop3.ppm'       
-          else
-            file_dc=trim(directory)//'vhires_dc_crop4.ppm'       
-          endif
+          write(cropname,1)itile
+1         format('vhires_crop',i2.2,'.ppm')        
+          file_dc=trim(directory)//trim(cropname)
 
           inquire(file=trim(file_dc),exist=l_there_dc)
           write(6,*)' File being inquired is ',trim(file_dc),' '
      1                                        ,l_there_dc      
-          if(l_there_dc)then                   ! Descartes data
+          if(l_there_dc)then                   ! NAIP/Descartes data
             pix_latlon_we = 1. / 865.954              
             pix_latlon_sn = 1. / 1130.26
             file = trim(file_dc)
             perimeter = 0.05
           else
             write(6,*)
-     1        ' Descartes data not present - returning from drape_topo'
+     1        ' NAIP data not present - returning from drape_topo'
             return
           endif
 
@@ -1204,16 +1216,16 @@
                 endif
 
                 if(jazi .eq. minazi)then
-                  write(6,1)ialt,jazi,arglat,arglon
+                  write(6,11)ialt,jazi,arglat,arglon
      1           ,pix_we,pix_sn,in,jn,counts(:),topo_albedo(:,ialt,jazi)
-1                 format(' Sample drape point',2i7,2f12.6,2f9.2,2i6,2x
+11                format(' Sample drape point',2i7,2f12.6,2f9.2,2i6,2x
      1                                        ,3i6,3f9.3)
                 endif ! printing point
 
               else ! outside image
                 if(jazi .eq. minazi)then
-                  write(6,2)ialt,jazi,pix_we,pix_sn,arglat,arglon
-2                 format(' outside image ',2i7,2f13.3,2f10.4)
+                  write(6,21)ialt,jazi,pix_we,pix_sn,arglat,arglon
+21                format(' outside image ',2i7,2f13.3,2f10.4)
                 endif              
 
               endif ! inside image
@@ -1224,6 +1236,8 @@
           deallocate(img)
 
           write(6,*)' End of tile ',itile
+
+          I4_elapsed = ishow_timer()
 
         enddo ! itile
 
@@ -1239,7 +1253,7 @@
 
         return
         end
-
+      
         subroutine get_camsite(rlat,rlon,site)
 
         character*10 site
@@ -1249,6 +1263,25 @@
         else
            site = 'nrel'
         endif
+
+        return
+        end
+
+        subroutine diffimg(img1,img2,nc,ni,nj,fname)
+
+        use ppm
+
+        integer img1(nc,ni,nj),img2(nc,ni,nj),imgdiff(nc,ni,nj)
+
+        character*(*)fname
+
+        write(6,*)' taking difference image ',trim(fname),ni,nj
+
+        imgdiff = 128 + (img2(:,:,:) - img1(:,:,:)) / 2
+
+        call writeppm3Matrix(imgdiff(0,:,:),imgdiff(1,:,:)
+     1                      ,imgdiff(2,:,:)
+     1                      ,trim(fname))
 
         return
         end
