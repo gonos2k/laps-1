@@ -121,7 +121,7 @@
         real, allocatable, dimension(:,:) :: azi_a_roll
         real, allocatable, dimension(:,:) :: cloud_od
         integer, allocatable, dimension(:,:) :: camera_cloud_mask
-        real, allocatable, dimension(:,:,:) :: camera_rgbf
+        real, allocatable, dimension(:,:,:) :: camera_rgb
         real*8, allocatable, dimension(:,:) :: dist_2_topo
 
         real alt_a_polar(iplo:iphi,jplo:jphi)
@@ -904,6 +904,7 @@
 
           elseif(trim(c_model) .eq. 'hrrr_smoke' .or.
      +           trim(c_model) .eq. 'wrf_chem' .or. 
+     +           trim(c_model) .eq. 'wrf' .or. 
      +           trim(c_model) .eq. 'hrrr_ak'         )then
 
             write(6,*)' Getting 1D pressure levels'
@@ -930,6 +931,8 @@
               aod = 0.
               i_aero_1d = 0 ! retain the 3D aerosols read in
               itype_aod = 3 ! 1 is TAOD5503D, 2 is tracer_1a, 3 is MURI
+            elseif(trim(c_model) .eq. 'wrf')then 
+              itype_aod = 0 ! no aerosols from WRF
             endif
 
 !           if(trim(c_model) .eq. 'hrrr_ak')then
@@ -1394,7 +1397,7 @@
             allocate(azi_a_roll(minalt:maxalt,minazi:maxazi))
             allocate(cloud_od(minalt:maxalt,minazi:maxazi))
             allocate(camera_cloud_mask(minalt:maxalt,minazi:maxazi))
-            allocate(camera_rgbf(nc,minalt:maxalt,minazi:maxazi))
+            allocate(camera_rgb(nc,minalt:maxalt,minazi:maxazi))
             allocate(dist_2_topo(minalt:maxalt,minazi:maxazi))
             allocate(sky_rgb_cyl(0:2,minalt:maxalt,minazi:maxazi))
             allocate(isky_rgb_cyl(0:2,minalt:maxalt,minazi:maxazi))
@@ -1638,7 +1641,7 @@
      1                     ,mode_cloud_mask,camera_cloud_mask       ! I
      1                     ,iloop                                   ! I
      1                     ,cloud_od,dist_2_topo                    ! O
-     1                     ,camera_rgbf                             ! O
+     1                     ,camera_rgb                              ! O
      1                     ,sky_rgb_cyl,correlation(:,iloc),istatus)! O
             if(istatus .ne. 1)then
               write(6,*)' Error istatus returned from calc_allsky'
@@ -1652,8 +1655,8 @@
               avecorr = sum(correlation(:,iloc))/float(nc)
               write(6,46)correlation(:,iloc),avecorr
 46            format('correlation is ',3f9.6,2x,f9.6,' incremental')
-              write(6,*)' camera_rgbf checksum = '
-     1                  ,sum(min(camera_rgbf,255.))
+              write(6,*)' camera_rgb checksum = '
+     1                  ,sum(min(camera_rgb,255.))
             else
               correlation = 0.
               avecorr = 0. 
@@ -1760,6 +1763,12 @@
                     isky_rgb_cyl = sky_rgb_cyl   
                 endif                                       
 
+                if(mode_cloud_mask .eq. 4)then
+                  call diffimg(isky_rgb_cyl,nint(min(camera_rgb,255.))
+     1                        ,nc,maxalt-minalt+1,maxazi-minazi+1
+     1                        ,'allsky_rgb_cyl_diff_'//trim(clun_loop))
+                endif
+
                 npts = 3*(maxalt-minalt+1)*(maxazi-minazi+1)
 !               write(6,*)' Write all sky cyl text file ',npts
 !               open(55,file='allsky_rgb_cyl.'//trim(clun_loop),status='unknown')
@@ -1843,6 +1852,10 @@
                   rotz = 0.
                 endif
 
+                if(alt_scale .lt. .005)then ! HIGHFLAT regional model
+                  pomag = pomag * 5.
+                endif                
+
                 pomag_tmp = getenv_real('POMAG',r_missing_data)
                 if(pomag_tmp .ne. r_missing_data)pomag = pomag_tmp
 
@@ -1854,10 +1867,6 @@
 
                 rotz_tmp  = getenv_real('ROTZ',r_missing_data)
                 if(rotz_tmp .ne. r_missing_data)rotz = rotz_tmp
-
-                if(alt_scale .lt. .005)then ! HIGHFLAT regional model
-                  pomag = pomag * 5.
-                endif                
 
                 write(6,*)'htrat/pomag',htagl(iloc)/earth_radius,pomag
 
@@ -1960,7 +1969,7 @@
             deallocate(azi_a_roll)
             deallocate(cloud_od)
             deallocate(camera_cloud_mask)
-            deallocate(camera_rgbf)
+            deallocate(camera_rgb)
             deallocate(dist_2_topo)
 
  900        continue
