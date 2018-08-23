@@ -214,6 +214,7 @@ C RLNG           I      R*4     Longitude (degrees)
 
           phi = rlat
           ha = hrangle
+          if(ha .lt. 0.)ha = ha + 360.
 
           sindec = SIND(dec)
           cosdec = COSD(dec)
@@ -226,15 +227,28 @@ C RLNG           I      R*4     Longitude (degrees)
           cosarg = min(max(cosarg,-1.),+1.)
           az =ACOSD(cosarg)
 
+!         if(i .eq. ni/2 .and. j .eq. nj/2)then
+!           write(6,*)'ha,az',ha,az
+!         endif
+
           if(ha .gt. 0. .AND. ha .lt. 180.)az = 360.0 - az
+
+!         if(i .eq. ni/2 .and. j .eq. nj/2)then
+!           write(6,*)'ha,az',ha,az
+!         endif
+
           azi(i,j) = az
           if(azi(i,j) .lt. 0.)azi(i,j) = azi(i,j) + 360.
 
+          if(i .eq. ni/2 .and. j .eq. nj/2)then
+            write(6,*)'rlat/rlon',rlat,rlon
+            write(6,*)'jd,ih,im',jd,ih,im
+            write(6,*)'ha,dec',ha,dec
+            write(6,*)'alt,azi',alt(i,j),azi(i,j)
+          endif
+
         enddo ! j
         enddo ! i
-
-!       write(6,*)'jd,ih,im',jd,ih,im
-!       write(6,*)'hrangle,dec,alt',hrangle,dec,alt
 
         RETURN
         END
