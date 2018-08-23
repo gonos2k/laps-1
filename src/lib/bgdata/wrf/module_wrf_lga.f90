@@ -759,7 +759,7 @@ CONTAINS
         print *, "Min/Max WRF 3D AOD: ",minval(aod_wrfs),maxval(aod_wrfs)
         istat_aod = 1
       ENDIF
-    else
+    elseif(itype_aod .eq. 3)then
       print *, 'reading 3-D aerosols from total_ext_file'
       open(65,file='/Users/albers/data/projects/muri/wrfchem_raw/total_ext_file',status='old',form='unformatted')
 !     read(65)dum3df
@@ -769,6 +769,8 @@ CONTAINS
 91    print *, 'read error - setting dum3df to 0.'
       dum3df = 0.
 92    print *, 'range of dum3df is',minval(dum3df),maxval(dum3df)
+    else
+      print *, 'option for no WRF aerosols to be read in'
     endif
 
     ! Get theta and convert to temperature
