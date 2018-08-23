@@ -27,10 +27,16 @@
        ri_polar_mid = ((ni_polar - 1.0) / 2.0) + 1.0 ! - float(ni_polar-1) * poy
        rj_polar_mid = ((nj_polar - 1.0) / 2.0) + 1.0 ! + float(nj_polar-1) * pox
 
+       if(pomag .lt. 1.0)then ! fisheye more than a hemisphere
+           alt_polar_min = 90. - (90. / pomag)
+       else
+           alt_polar_min = 0.
+       endif
+
        write(6,*)'cyl_to_polar ',ni_polar,nj_polar,ri_polar_mid,rj_polar_mid,posign
        write(6,*)'minalt,maxalt,minazi,maxazi',minalt,maxalt,minazi,maxazi
        write(6,*)'alt_scale,azi_scale',alt_scale,azi_scale
-       write(6,*)'altmin,azimin',altmin,azimin
+       write(6,*)'altmin,azimin,alt_polar_min',altmin,azimin,alt_polar_min
        write(6,*)'polat,pomag,rotew,rotz',polat,pomag,rotew,rotz
        write(6,*)'pox,poy',pox,poy
        write(6,*)'iplo,iphi,jplo,jphi',iplo,iphi,jplo,jphi
@@ -101,7 +107,7 @@
              azi2 = azi
            endif
            
-           if(alt*posign .ge. 0.)then
+           if(alt*posign .ge. alt_polar_min)then
 !              i_cyl = nint(alt)    
 !              j_cyl = nint(azi) 
 !              polar(ip,jp) = cyl(i_cyl,j_cyl)
