@@ -14,6 +14,7 @@ LAPSLIBS = $(SRCROOT)/src/lib/cloud/libcloud.a  \
            $(SRCROOT)/src/lib/util/libutil.a  \
            $(SRCROOT)/src/lib/bgdata/libbgdata.a  \
            $(SRCROOT)/src/lib/liblaps.a \
+           $(SRCROOT)/src/lib/satellite/libsatellite.a \
            $(SRCROOT)/src/lib/mthermo/libmthermo.a  \
            $(SRCROOT)/src/lib/modules/libmodules.a \
            $(SRCROOT)/src/lib/liblaps.a 
@@ -24,6 +25,7 @@ DBLAPSLIBS = $(SRCROOT)/src/lib/cloud/libdebugcloud.a  \
              $(SRCROOT)/src/lib/util/libdebugutil.a  \
              $(SRCROOT)/src/lib/bgdata/libdebugbgdata.a  \
              $(SRCROOT)/src/lib/libdebuglaps.a \
+             $(SRCROOT)/src/lib/satellite/libdebugsatellite.a \
              $(SRCROOT)/src/lib/mthermo/libdebugmthermo.a  \
              $(SRCROOT)/src/lib/modules/libdebugmodules.a \
              $(SRCROOT)/src/lib/libdebuglaps.a
