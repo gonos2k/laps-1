@@ -1397,7 +1397,7 @@ e) perl window_domain_rt.pl -t /data/fxa/laps_template -s /awips/laps \
            Surface observations of various types, covering much of the
            world are available in realtime from GSD's MADIS system (with some
            restrictions). This data, generally in 'WFO/AWIPS' netCDF format, 
-           are distributed via the MADIS server at http://madis.noaa.gov. 
+           are distributed via the MADIS server at https://madis.noaa.gov. 
            Thus MADIS is available both inside and outside ESRL/GSD. The
            MADIS netCDF has additional variables (such as QC flags) that go
            beyond what is in the NIMBUS format.
@@ -1406,8 +1406,8 @@ e) perl window_domain_rt.pl -t /data/fxa/laps_template -s /awips/laps \
            (METAR/SYNOP), 'maritime' (Buoy/Ship), 'mesonet', 'urbanet', and 
            others. This is an excellent source of surface observations for 
            most users outside of ESRL/GSD to start with. To request a real-time
-           data stream please go to the MADIS data application page at this 
-           link: http://madis.noaa.gov/data_application.html 
+           data stream one can go to the MADIS server and request an application
+	   form.
 
            A few other METAR/SYNOP formats are now being supported in LAPS        
            software as listed in the 'static/obs_driver.nl' namelist. The GSD
