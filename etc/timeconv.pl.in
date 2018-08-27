@@ -48,7 +48,18 @@ my @MON = qw(JAN FEB MAR APR MAY JUN JUL AUG SEP OCT NOV DEC);
 my ($archive_time, $i4time);
 
 if(defined $opt_a){
-   if(length($opt_a) == 16){ # dd-mmm-yyyy-hhmm (Ascii time format)
+   if($opt_i eq "yyyymmdd_hhmm"){ 
+      my $year = substr($opt_a,0,4); 
+      my $mon = substr($opt_a,4,2);
+      my $day = substr($opt_a,6,2);
+      my $hours = substr($opt_a,9,2);
+      my $minutes = substr($opt_a,11,2);
+      $i4time = &laps_tools::date_to_i4time($year,$mon,$day,$hours,$minutes,"00");
+      $i4time = $i4time + 315619200; # convert from 1970 to 1960 reference
+#     my $doy = &laps_tools::get_julian_day($day,$month,$year);
+#     $archive_time = &laps_tools::a9time_to_i4time($a9time);
+
+   }elsif(length($opt_a) == 16){ # dd-mmm-yyyy-hhmm (Ascii time format)
       my $mon=0;
       my ($day, $month, $year, $hoursmin)=split /\-/, $opt_a;
       my $hours   = substr($hoursmin,0,2);
@@ -108,6 +119,10 @@ if(defined $opt_a){
       exit;
    }
 #  $archive_time = &seconds_since_1970($opt_a,$LAPSROOT,$LAPS_DATA_ROOT);
+
+}else{
+      print "USAGE: use -a to input time argument\n";
+      exit;
 }
 
 if(defined $opt_t){
