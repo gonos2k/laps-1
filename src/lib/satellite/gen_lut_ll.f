@@ -142,8 +142,8 @@ c
             nyll = 2401.
             rlatc=(60. + (-60.)) / 2.
             rlonc=(80. + 200. ) / 2.
-            lat0=+55.
-            lon0=+68.
+            lat0=+60.
+            lon0=+80.
             dx = 120. / (nxll-1.) ! longitude range
             dy = 120. / (nyll-1.) ! latitude range
 
