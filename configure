@@ -3578,5 +3578,6 @@ chmod +x etc/www/laps.cgi
 chmod +x etc/www/*.*sh
 chmod +x etc/www/lapsplot/*.*sh
 chmod +x etc/verif/*.*sh
+chmod +x etc/allsky/montage_images
 
 ./util/fix_net "C      use trigd" "!      use trigd" src/include/trigd.inc
