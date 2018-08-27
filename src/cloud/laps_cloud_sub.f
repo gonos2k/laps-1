@@ -860,6 +860,8 @@ C READ IN SATELLITE DATA
 !           offset_ir_j(:,:)  = +2500./grid_spacing_cen_m
             offset_vis_i(:,:) = -1500./grid_spacing_cen_m
             offset_vis_j(:,:) = +3000./grid_spacing_cen_m
+            offset_vis_i(:,:) = -3000./grid_spacing_cen_m
+            offset_vis_j(:,:) = +4000./grid_spacing_cen_m
         end where
         where(abs(subpoint_lon_clo_s8a(:,:)-(-135.)) .lt. 20.) ! GOES W
             offset_ir_i(:,:)  = -3000./grid_spacing_cen_m
