@@ -16,5 +16,11 @@ rm -f $flagfile
 echo "qsub -A $project $script"
       qsub -A $project $script
 
-/usr/nfs/lapb/parallel/laps/etc/wait_for_file.sh $flagfile 120 60
+/opt/nfs/lapb/parallel/laps/etc/wait_for_file.sh $flagfile 120 60
 
+if [ -f $flagfile ]
+    then
+    echo successful completion of qsub_wait...
+else
+    echo ERROR: qsub_wait did not complete...
+fi
