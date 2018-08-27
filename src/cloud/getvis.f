@@ -118,6 +118,7 @@ cdis
         do j = 1,nj
             sat_albedo(i,j) = r_missing_data
             sat_data_in(i,j) = r_missing_data
+            reflectance(i,j) = r_missing_data
             cloud_frac_vis_a(i,j) = r_missing_data
             istat_vis_a(i,j) = 0
         enddo ! j
@@ -189,7 +190,7 @@ cdis
 
 !       Initial test for missing albedo (and partial data coverage)
 !       Loop in satellite i,j (uncorrected for parallax)
-        write(6,*)' solalt_thr_vis (not yet used) = ',solalt_thr_vis
+        write(6,*)' solalt_thr_vis = ',solalt_thr_vis
         do i = 1,ni
         do j = 1,nj
             ioff = min(max(i+nint(offset_vis_i(i,j)),1),ni)
@@ -200,11 +201,14 @@ cdis
             else
 !               Convert to reflectance
 !               reflectance = (sat_data_in(ioff,joff) / 256.) * 1.2
-                reflectance(i,j) = sat_data_in(ioff,joff)
+                if(sat_data_in(ioff,joff) .ne. r_missing_data)then
+                    reflectance(i,j) = sat_data_in(ioff,joff)
+                endif
 
 !               Should this be done elsewhere according to how other
 !               routines use sfc_albedo?                
-                if(sol_alt(i,j) .gt. 7.0)then
+                if(sol_alt(i,j) .gt. solalt_thr_vis .and.
+     1             reflectance(i,j) .ne. r_missing_data)then
                     if(i .eq. idb .and. j .eq. jdb)then
                         iverbose = 1
                     else
