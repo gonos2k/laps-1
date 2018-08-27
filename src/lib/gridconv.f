@@ -728,16 +728,14 @@ c     enddo
       if(cgrddef.eq.'S')then
          do n=1,np
             diff=glon(n)-lon0
-            if (diff .lt. 0.) diff=diff+360.
-            if (diff .ge. 360.) diff=diff-360.
+            if (diff .lt. -180.) diff=diff+360.
             lli(n)=diff/dlond+1.
             llj(n)=(glat(n)-lat0)/dlatd+1.
          enddo
       elseif(cgrddef.eq.'N')then
          do n=1,np
             diff=glon(n)-lon0
-            if (diff .lt. 0.) diff=diff+360.
-            if (diff .ge. 360.) diff=diff-360.
+            if (diff .lt. -180.) diff=diff+360.
             lli(n)=diff/dlon+1.
             llj(n)=(lat0-glat(n))/dlat+1.
          enddo
