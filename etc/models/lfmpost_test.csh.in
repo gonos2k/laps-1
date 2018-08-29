@@ -1,9 +1,12 @@
-#!@CSH@    
+#!@CSH@  
 
 # Usage examples:
 # lfmpost_test.csh $WRF_DATA_ROOT $LAPS_DATA_ROOT $RUN wrf-wsm6          # no ancillary operations          
 # lfmpost_test.csh $WRF_DATA_ROOT $LAPS_DATA_ROOT $RUN wrf-wsm6 mvoutput # move output from $WRF_DATA_ROOT to $LAPS_DATA_ROOT
+# lfmpost_test.csh $WRF_DATA_ROOT $LAPS_DATA_ROOT $RUN wrf-wsm6 linkwrf  # link wrf output from $WRF_DATA_ROOT to $LAPS_DATA_ROOT
 # lfmpost_test.csh $WRF_DATA_ROOT $LAPS_DATA_ROOT $RUN wrf-wsm6 cpstatic # copy static files from $LAPS_DATA_ROOT to 
+#                                                                        # $WRF_DATA_ROOT               
+# lfmpost_test.csh $WRF_DATA_ROOT $LAPS_DATA_ROOT $RUN wrf-wsm6 lnstatic # copy static files from $LAPS_DATA_ROOT to 
 #                                                                        # $WRF_DATA_ROOT               
 # lfmpost_test.csh $WRF_DATA_ROOT $LAPS_DATA_ROOT $RUN wrf-wsm6 cpstatic mvoutput # copy static files and move output from 
 #                                                                        # $WRF_DATA_ROOT to $LAPS_DATA_ROOT
@@ -15,14 +18,14 @@ setenv WRF_DATA_ROOT $1                                            # WRF data di
                                                                    #                     the $LAPS_DATA_ROOT)
 setenv LAPSINSTALLROOT @prefix@
 setenv LAPS_DATA_ROOT  $2
-setenv RUN       $3                # Model Run Initial Time          
+setenv RUN       $3                                                # Model Run Initial Time (yyyymmddhhmm)
 setenv MODELNAME $4           
 setenv WRFDIR    $LAPS_DATA_ROOT/lapsprd/$MODELNAME                # WRF directory within $LAPS_DATA_ROOT
 setenv NEST      d01
 setenv MODEL     wrf
 
-setenv ADVPCP    0900
-setenv ADVCLD    0900
+setenv ADVPCP    -999
+setenv ADVCLD    -999
 
 # Number of forecast times (not including zero minute)
 setenv MAXTIMES  `perl $LAPSINSTALLROOT/etc/read_nl.pl -d $LAPS_DATA_ROOT -n nest7grid.parms -v n_fcst_steps`
@@ -34,6 +37,8 @@ echo "FCSTINTVL = $FCSTINTVL"
 
 setenv FUALAPS $LAPS_DATA_ROOT/lapsprd/fua/$MODELNAME   
 setenv FSFLAPS $LAPS_DATA_ROOT/lapsprd/fsf/$MODELNAME  
+
+#module load netcdf
 
 echo " "
 echo "external WRF_DATA_ROOT is $WRF_DATA_ROOT"
@@ -107,6 +112,34 @@ else
           mkdir -p $FSFWRF
 endif
 
+if ($5 == cpstatic) then
+  echo "Copying static files from $LAPS_DATA_ROOT to $WRFDIR"
+# scp jetscp.rdhpcs.noaa.gov:/lfs0/projects/hmtb/dwr_domains/laps/$NEST/static/static.nest7grid    $WRFDIR/static
+  cp $LAPS_DATA_ROOT/static/lfmpost.nl          $WRFDIR/$RUN/static
+  cp $LAPS_DATA_ROOT/static/static.nest7grid    $WRFDIR/static
+  cp $LAPS_DATA_ROOT/static/*.nl                $WRFDIR/static
+  cp $LAPS_DATA_ROOT/static/*.parms             $WRFDIR/static
+  cp $LAPS_DATA_ROOT/static/corners.dat         $WRFDIR/static
+  cp $LAPS_DATA_ROOT/cdl/fua.cdl                $WRFDIR/cdl
+  cp $LAPS_DATA_ROOT/cdl/fsf.cdl                $WRFDIR/cdl
+# ln -s $LAPS_DATA_ROOT/lapsprd                 $WRFDIR/lapsprd
+endif
+
+if ($5 == lnstatic || $6 == lnstatic) then
+  echo "Link static files from $LAPS_DATA_ROOT to $WRFDIR"
+# scp jetscp.rdhpcs.noaa.gov:/lfs0/projects/hmtb/dwr_domains/laps/$NEST/static/static.nest7grid    $WRFDIR/static
+  rm -rf $WRFDIR/$RUN/static; mkdir -p $WRFDIR/$RUN/static
+  ln -s $LAPS_DATA_ROOT/static/lfmpost.nl          $WRFDIR/$RUN/static
+  rm -rf $WRFDIR/$RUN/run/static; mkdir -p $WRFDIR/$RUN/run/static
+  ln -s $LAPS_DATA_ROOT/static/static.nest7grid    $WRFDIR/static
+  ln -s $LAPS_DATA_ROOT/static/*.nl                $WRFDIR/static
+  ln -s $LAPS_DATA_ROOT/static/*.parms             $WRFDIR/static
+  ln -s $LAPS_DATA_ROOT/static/corners.dat         $WRFDIR/static
+  ln -s $LAPS_DATA_ROOT/cdl/fua.cdl                $WRFDIR/cdl
+  ln -s $LAPS_DATA_ROOT/cdl/fsf.cdl                $WRFDIR/cdl
+# ln -s $LAPS_DATA_ROOT/lapsprd                    $WRFDIR/lapsprd
+endif
+
 setenv FCOUNT 0
 while ($FCOUNT <= $MAXTIMES)
 
@@ -159,17 +192,8 @@ while ($FCOUNT <= $MAXTIMES)
     ##ln -s /scratch/staging/fab/jankov/* $WRFDIR/$RUN/wrfprd
   endif
 
-  if ($5 == cpstatic) then
-    echo "Copying static files from $LAPS_DATA_ROOT to $WRFDIR"
-#   scp jetscp.rdhpcs.noaa.gov:/lfs0/projects/hmtb/dwr_domains/laps/$NEST/static/static.nest7grid    $WRFDIR/static
-    cp $LAPS_DATA_ROOT/static/lfmpost.nl          $WRFDIR/$RUN/static
-    cp $LAPS_DATA_ROOT/static/static.nest7grid    $WRFDIR/static
-    cp $LAPS_DATA_ROOT/static/*.nl                $WRFDIR/static
-    cp $LAPS_DATA_ROOT/static/*.parms             $WRFDIR/static
-    cp $LAPS_DATA_ROOT/static/corners.dat         $WRFDIR/static
-    cp $LAPS_DATA_ROOT/cdl/fua.cdl                $WRFDIR/cdl
-    cp $LAPS_DATA_ROOT/cdl/fsf.cdl                $WRFDIR/cdl
-#   ln -s $LAPS_DATA_ROOT/lapsprd                 $WRFDIR/lapsprd
+  if ($5 == linkwrf || $6 == linkwrf) then
+    ln -s $WRF_DATA_ROOT/$WRFOUTFILE $WRFDIR/$RUN/wrfprd
   endif
 
   cd $WRFDIR/$RUN/wrfprd                                                       
@@ -204,7 +228,7 @@ while ($FCOUNT <= $MAXTIMES)
 
   echo  " " | tee -a $LOGFILE
 
-  if ($5 == mvoutput || $6 == mvoutput) then
+  if ($5 == mvoutput || $6 == mvoutput || $7 == mvoutput) then
     echo "moving output file $WRFDIR/$RUN/wrfprd/$NEST/fua/*.fua to $LAPS_DATA_ROOT"                      
     mv $WRFDIR/$RUN/wrfprd/$NEST/fua/*.fua  $FUALAPS                                                     
     echo "moving output file $WRFDIR/$RUN/wrfprd/$NEST/fsf/*.fsf to $LAPS_DATA_ROOT"                       
