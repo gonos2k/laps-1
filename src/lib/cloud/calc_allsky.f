@@ -27,7 +27,7 @@
      1                     ,iloop                                   ! I
      1                     ,cloud_od,dist_2_topo                    ! O
      1                     ,camera_rgb                              ! O
-     1                     ,sky_rgb_cyl,correlation,istatus)        ! O
+     1                     ,sky_rgb_cyl,correlation,a_t,b_t,istatus)! O
 
         use mem_allsky
         use mem_namelist, ONLY: earth_radius, ssa
@@ -83,7 +83,7 @@
         real camera_rgbf(nc,minalt:maxalt,minazi:maxazi)
         real wt_a(minalt:maxalt,minazi:maxazi)
         real elong_a(minalt:maxalt,minazi:maxazi)
-        real correlation(nc),xbar_a(nc),ybar_a(nc)
+        real correlation(nc),xbar_a(nc),ybar_a(nc),a_t(nc),b_t(nc)
         integer camera_cloud_mask(minalt:maxalt,minazi:maxazi)
         integer sim_cloud_mask(minalt:maxalt,minazi:maxazi)
         integer diff_cloud_mask(minalt:maxalt,minazi:maxazi)
@@ -714,7 +714,7 @@
               I4_elapsed = ishow_timer()
 
               if(iloop .eq. 1 .OR. .true.)then
-                write(6,*)' Reading camera image: mode_cloud_mask'
+                write(6,*)' Calling get_camera_image: mode_cloud_mask'
      1                    ,mode_cloud_mask
                 mode_cam = 2
                 call get_camsite(rlat,rlon,site)
@@ -776,7 +776,7 @@
               do ic = 1,nc
                 call stats_2d(maxalt-minalt+1,maxazi-minazi+1
      1                       ,camera_rgbf(ic,:,:),sky_rgb_cyl(ic-1,:,:)
-     1                       ,wt_a,a_t,b_t,xbar_a(ic),ybar_a(ic)
+     1                       ,wt_a,a_t(ic),b_t(ic),xbar_a(ic),ybar_a(ic)
      1                       ,correlation(ic),bias,std
      1                       ,r_missing_data,istatus)
               enddo
@@ -788,7 +788,13 @@
                 write(6,*)' brightening simulated image to match camera'
                 sky_rgb_cyl(:,:,:) =
      1                 min(sky_rgb_cyl(:,:,:)/corr_scaling,255.)
+                a_t(:) = a_t(:) / corr_scaling
+                b_t(:) = b_t(:) / corr_scaling
+              else
+                write(6,*)' simulated image is brighter than camera'
               endif
+              write(6,*)' a_t is ',a_t
+              write(6,*)' b_t is ',b_t
 
               I4_elapsed = ishow_timer()
   
@@ -1267,17 +1273,25 @@
         return
         end
 
-        subroutine diffimg(img1,img2,nc,ni,nj,fname)
+        subroutine diffimg(img1,img2,nc,ni,nj,a_t,b_t,fname)
 
         use ppm
 
         integer img1(nc,ni,nj),img2(nc,ni,nj),imgdiff(nc,ni,nj)
+        real a_t(nc),b_t(nc)
+        real tmp1(ni,nj),tmp2(ni,nj)
 
         character*(*)fname
 
         write(6,*)' taking difference image ',trim(fname),ni,nj
 
-        imgdiff = 128 + (img2(:,:,:) - img1(:,:,:)) / 2
+!       Determine difference WRT regression line
+        do ic = 1,nc
+            tmp1(:,:) = img1(ic,:,:)
+            tmp2(:,:) = img2(ic,:,:)
+            imgdiff(ic,:,:) = 128 +
+     1        nint( tmp2(:,:) - (a_t(ic) * tmp1(:,:) + b_t(ic)) )
+        enddo ! ic
 
         call writeppm3Matrix(imgdiff(0,:,:),imgdiff(1,:,:)
      1                      ,imgdiff(2,:,:)
