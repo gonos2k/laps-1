@@ -306,6 +306,8 @@
          write(6,*)trim(convert_cmd)
          call system(trim(convert_cmd))
 
+         call sleep(1)
+
          open(u,file=trim(img_ppm),status='old',err=999)
          read(u,*)   
          read(u,*)iwidth,iheight
@@ -347,7 +349,7 @@
            write(6,*)icam_rgb(1,minazi:maxazi:120,maxalt)
          endif
          
-!        Rotate 90 degrees and flip
+!        Rotate 90 degrees (reverse i,j) and flip (i)
          do i = minalt,maxalt
            ialt_flip = minalt+(maxalt-i)
            do j = minazi,maxazi
