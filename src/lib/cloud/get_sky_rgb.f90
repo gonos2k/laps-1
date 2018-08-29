@@ -370,19 +370,29 @@
         write(6,3)sol_alt,corr1,glwmid,contrast,fracerf,erfterm
 3       format('  sol_alt/corr1/glwmid/contrast/fracerf/erfterm',f9.2,2f9.3,f9.1,f9.3,f9.3)
 
+!       RGB test for day_int0 relative radiance
         ref_nl = day_int0
-        if(new_color .gt. 0)then
-          call nl_to_RGB(ref_nl(:),glwmid,contrast & 
+        call nl_to_RGB(ref_nl(:),glwmid,contrast & 
                         ,128.,wa,1,xyz,ref_red,ref_grn,ref_blu)
-        else
-          ref_red = 240.; ref_grn = 240.; ref_blu = 240.
-        endif
         refcolmax = max(ref_red,ref_grn,ref_blu)
         refred1 = (ref_red/refcolmax) * 255.
         refgrn1 = (ref_grn/refcolmax) * 255.
         refblu1 = (ref_blu/refcolmax) * 255.
         write(6,4)new_color,ref_red,ref_grn,ref_blu,refred1,refgrn1,refblu1
 4       format(' newc/reference RGB = ',i2,3f7.1,3x,3f7.1)
+
+!       RGB test for Rayleigh radiance
+        do ic = 1,nc
+            ref_nl(ic) = day_int0 * (wa(1) / wa(ic))**4.
+        enddo 
+        call nl_to_RGB(ref_nl(:),glwmid,contrast & 
+                        ,128.,wa,1,xyz,ref_red,ref_grn,ref_blu)
+        refcolmax = max(ref_red,ref_grn,ref_blu)
+        refred1 = (ref_red/refcolmax) * 255.
+        refgrn1 = (ref_grn/refcolmax) * 255.
+        refblu1 = (ref_blu/refcolmax) * 255.
+        write(6,5)ref_nl(:)/1e9,refred1,refgrn1,refblu1,xyz
+5       format(' Rayleigh ref/RGB/xyz = ',3f7.3,3x,3f7.1,3x,3f7.3)
 
 !       Redness section (sun at low solar altitude)
 !       Compare with 'get_cloud_rad' redness calculation?
