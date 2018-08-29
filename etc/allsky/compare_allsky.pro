@@ -10,6 +10,8 @@ filetime = GETENV('LAPS_ASCIITIME')
 site = GETENV('SITE')
 file_model_polar = GETENV('FILE_MODEL_POLAR')
 file_camera_polar = GETENV('FILE_CAMERA_POLAR')
+file_model_cyl = GETENV('FILE_MODEL_CYL')
+file_camera_cyl = GETENV('FILE_CAMERA_CYL')
 a9time = GETENV('LAPS_A9TIME')
 solar_alt = GETENV('SOLAR_ALT')
 solar_az  = GETENV('SOLAR_AZ')
@@ -371,14 +373,14 @@ for ic = 0,2 do begin
 
     for ii = 0,imax do begin
       for jj = 0,jmax do begin
-        if(cont_table_mask[1,ii,jj] NE imask_grn)then begin ; not a masked point
+;       if(cont_table_mask[1,ii,jj] NE imask_grn)then begin ; not a masked point
           scr = scr + 1
           model_rebin[scr]   = model_polar[ic,ii,jj]             
           camera_rebin[scr]  = camera_polar[ic,ii,jj]             
           if(jj EQ 256)then begin
             print,ic,ii,scr,model_rebin(scr),camera_rebin(scr)
           endif
-        endif
+;       endif
       endfor
     endfor
     print,    'total scr is ',scr
