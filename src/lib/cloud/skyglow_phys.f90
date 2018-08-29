@@ -522,7 +522,7 @@
                          ,earth_radius,0 &             ! I
                          ,agdum,aodum,aascat,refr_deg) ! O
 !        scatter_order = 1.0 ! f(altray,sol_alt)
-         scatter_order = max(aod_vrt*aascat,1.0)**0.5 ! 0.5-1.5
+         scatter_order = max(aod_vrt*aascat,1.0)**0.3 ! 0.5-1.5
          scatter_order_t = 1.0
          write(6,*)'altscat/aascat/sco',altscat,aascat,scatter_order
 
