@@ -63,6 +63,8 @@
         rel_solar_luminance = rgb_to_y(rel_solar(1),rel_solar(2) &
                                       ,rel_solar(3))
         if(iverbose .eq. 1)then
+          write(6,*)
+          write(6,*)'rel_solar = ',rel_solar
           write(6,*)'rel_solar_luminance = ',rel_solar_luminance
         endif
 
@@ -80,7 +82,13 @@
 !       Extrapolate color            
         call extrap_color(rel_solar,wa,rel_solar_extrap) ! dimensionless
         farad(:) = fasun(:) * rel_solar_extrap(:)        ! spect irradiance
-        if(iverbose .eq. 1)write(6,*)' farad = ',farad
+        if(iverbose .eq. 1)then
+           write(6,*)' ict    wa    rel_solar    fa     farad = '
+           do ict = 1,nct
+              write(6,11)ict,wa_tri(ict),rel_solar_extrap(ict),fasun(ict),farad(ict)
+11            format(i4,f9.4,f9.4,f9.4,f9.4)
+           enddo ! ict
+        endif
 
 !       Convert sprad to xyz
         call get_tricolor(farad,iverbose,wa,xx,yy,zz,x,y,z,luminance)
@@ -141,15 +149,15 @@
         real a_nc(nc), a_nct(nct)
 
 !       Assuming nc = 3, find polynomial fit
-        X1 = wa(1);   X2 = wa(2);   X3 = wa(3)
-        Y1 = a_nc(1); Y2 = a_nc(2); Y3 = a_nc(3)
+        X1 = log(wa(1))  ; X2 = log(wa(2))  ; X3 = log(wa(3))
+        Y1 = log(a_nc(1)); Y2 = log(a_nc(2)); Y3 = log(a_nc(3))
 
         a = ((Y2-Y1)*(X1-X3) + (Y3-Y1)*(X2-X1)) / &
             ((X1-X3)*(X2**2-X1**2) + (X2-X1)*(X3**2-X1**2))
         b = ((Y2 - Y1) - A*(X2**2 - X1**2)) / (X2-X1)
         c = Y1 - A*X1**2 - B*X1
 
-        a_nct(:) = a*wa_tri(:)**2 + b*wa_tri(:) + c
+        a_nct(:) = exp(a*log(wa_tri(:))**2 + b*log(wa_tri(:)) + c)
  
         return
         end
