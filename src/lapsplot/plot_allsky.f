@@ -141,7 +141,7 @@
 
         real, allocatable, dimension(:,:,:) :: sky_rgb_cyl
         integer, allocatable, dimension(:,:,:) :: isky_rgb_cyl
-        real correlation(nc,maxloc)
+        real correlation(nc,maxloc),a_t(nc,maxloc),b_t(nc,maxloc)
         integer mode_cloud_mask /4/ ! ignore the mask
 
         real*8 xsound(maxloc),ysound(maxloc)
@@ -1642,7 +1642,8 @@
      1                     ,iloop                                   ! I
      1                     ,cloud_od,dist_2_topo                    ! O
      1                     ,camera_rgb                              ! O
-     1                     ,sky_rgb_cyl,correlation(:,iloc),istatus)! O
+     1                     ,sky_rgb_cyl,correlation(:,iloc)         ! O
+     1                     ,a_t(:,iloc),b_t(:,iloc),istatus)        ! O
             if(istatus .ne. 1)then
               write(6,*)' Error istatus returned from calc_allsky'
               return
@@ -1766,6 +1767,7 @@
                 if(mode_cloud_mask .eq. 4)then
                   call diffimg(isky_rgb_cyl,nint(min(camera_rgb,255.))
      1                        ,nc,maxalt-minalt+1,maxazi-minazi+1
+     1                        ,a_t(:,iloc),b_t(:,iloc)
      1                        ,'allsky_rgb_cyl_diff_'//trim(clun_loop))
                 endif
 
@@ -1774,7 +1776,7 @@
 !               open(55,file='allsky_rgb_cyl.'//trim(clun_loop),status='unknown')
 !               write(55,*)isky_rgb_cyl           
 !               close(55)
-                write(6,*)' Write all sky cyl ppm file ',trim(clun_loop)
+                write(6,*)' Write cyl diff ppm file ',trim(clun_loop)
                 call writeppm3Matrix(
      1                isky_rgb_cyl(0,:,:),isky_rgb_cyl(1,:,:)
      1               ,isky_rgb_cyl(2,:,:)
