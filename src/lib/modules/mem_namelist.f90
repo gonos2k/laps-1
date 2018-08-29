@@ -55,6 +55,10 @@ include 'lapsparms.for'
         integer iwrite_output
         integer i_offset_radar
 
+!       Species are urban, dust, smoke, seasalt, xxxxx
+        integer, parameter :: nasp=5
+        real aod_sp(nasp)
+
         character*40  vertical_grid
         character*10  lvl_coord_cdf
         character*50  c50_lowres_directory
