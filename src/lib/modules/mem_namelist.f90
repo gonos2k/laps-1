@@ -28,11 +28,6 @@ include 'lapsparms.for'
         integer iverbose
         real    r_missing_data
         integer  MAX_RADARS
-        real aod,aod_bin(3),aod_asy(3,3),fcterm,aod_ha,ht_ha(4),ssa(3)
-        real fcterm_a(3),angstrom_exp_a
-        real alpha_ha
-        real o3_du,h_o3,d_o3
-        real aero_scaleht
         real ref_base
         real ref_base_useable
         real r_hybrid_first_gate
@@ -55,9 +50,14 @@ include 'lapsparms.for'
         integer iwrite_output
         integer i_offset_radar
 
-!       Species are urban, dust, smoke, seasalt, xxxxx
+!       Aerosol species are urban, dust, smoke, seasalt, xxxxx
         integer, parameter :: nasp=5
-        real aod_sp(nasp)
+        real aod_sp(nasp),frac_asp(nasp),aod_asy_sp(3,3,nasp)
+        real aod,aod_bin(3),aod_asy(3,3),fcterm,aod_ha,ht_ha(4),ssa(3)
+        real fcterm_a(3),angstrom_exp_a
+        real alpha_ha
+        real o3_du,h_o3,d_o3
+        real aero_scaleht
 
         character*40  vertical_grid
         character*10  lvl_coord_cdf
@@ -393,9 +393,81 @@ elseif (namelist_name == 'lapsparms') then
 
 !  fraction of aerosols in each bin & asymmetry factor
 !  Factor of 2 back scatter increase from minimum, peak of 50
-   aod_bin(1) = 0.000 
-   aod_bin(2) = 0.987 
-   aod_bin(3) = 0.013 
+!  aod_bin(1) = 0.000 
+!  aod_bin(2) = 0.987 
+!  aod_bin(3) = 0.013 
+
+   frac_asp(:) = 0. ! species aren't used unless sum of fractions = 1
+
+!-------------------------------------------------------------------------   
+
+!  Urban Aerosol Species Default Values
+
+!  Coarse mode aerosols (rgb)
+   aod_asy_sp(1,1,1) = +0.957 ; aod_asy_sp(1,2,1) = +0.962 ; aod_asy_sp(1,3,1) = +0.967
+
+!  Fine mode aerosols (rgb)
+   aod_asy_sp(2,1,1) = +0.49  ; aod_asy_sp(2,2,1) = +0.50  ; aod_asy_sp(2,3,1) = +0.51 
+
+!  Backscattering aerosols
+   aod_asy_sp(3,:,1) = +0.55 
+
+!-------------------------------------------------------------------------   
+
+!  Dust Aerosol Species Default Values
+
+!  Coarse mode aerosols (rgb)
+   aod_asy_sp(1,1,2) = +0.957 ; aod_asy_sp(1,2,2) = +0.962 ; aod_asy_sp(1,3,2) = +0.967
+
+!  Fine mode aerosols (rgb)
+   aod_asy_sp(2,1,2) = +0.49  ; aod_asy_sp(2,2,2) = +0.50  ; aod_asy_sp(2,3,2) = +0.51 
+
+!  Backscattering aerosols
+   aod_asy_sp(3,:,2) = +0.55 
+
+!-------------------------------------------------------------------------   
+
+!  Smoke Aerosol Species Default Values
+
+!  Coarse mode aerosols (rgb)
+   aod_asy_sp(1,1,3) = +0.957 ; aod_asy_sp(1,2,3) = +0.962 ; aod_asy_sp(1,3,3) = +0.967
+
+!  Fine mode aerosols (rgb)
+   aod_asy_sp(2,1,3) = +0.49  ; aod_asy_sp(2,2,3) = +0.50  ; aod_asy_sp(2,3,3) = +0.51 
+
+!  Backscattering aerosols
+   aod_asy_sp(3,:,3) = +0.55 
+
+!-------------------------------------------------------------------------   
+
+!  Sea Salt Aerosol Species Default Values
+
+!  Coarse mode aerosols (rgb)
+   aod_asy_sp(1,1,4) = +0.957 ; aod_asy_sp(1,2,4) = +0.962 ; aod_asy_sp(1,3,4) = +0.967
+
+!  Fine mode aerosols (rgb)
+   aod_asy_sp(2,1,4) = +0.49  ; aod_asy_sp(2,2,4) = +0.50  ; aod_asy_sp(2,3,4) = +0.51 
+
+!  Backscattering aerosols
+   aod_asy_sp(3,:,4) = +0.55 
+
+!-------------------------------------------------------------------------   
+
+!  xxxxx Aerosol Species Default Values
+
+!  Coarse mode aerosols (rgb)
+   aod_asy_sp(1,1,5) = +0.957 ; aod_asy_sp(1,2,5) = +0.962 ; aod_asy_sp(1,3,5) = +0.967
+
+!  Fine mode aerosols (rgb)
+   aod_asy_sp(2,1,5) = +0.49  ; aod_asy_sp(2,2,5) = +0.50  ; aod_asy_sp(2,3,5) = +0.51 
+
+!  Backscattering aerosols
+   aod_asy_sp(3,:,5) = +0.55 
+
+!-------------------------------------------------------------------------   
+!-------------------------------------------------------------------------   
+
+!  Composite Aerosols
 
 !  Coarse mode aerosols (rgb)
    aod_asy(1,1) = +0.957 ; aod_asy(1,2) = +0.962 ; aod_asy(1,3) = +0.967
