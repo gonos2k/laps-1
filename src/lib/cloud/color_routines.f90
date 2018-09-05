@@ -264,7 +264,13 @@
 
         if(iverbose .eq. 1)write(6,*)'  subroutine get_fluxsun',nc,wa
 
-        TS = 5900. ! 5780.
+!       Note that 5900K is the correlated color temperature of the sun
+!       giving the best fit to a blackbody curve shape. The total energy
+!       emitted though is related to the effective temperature of 5780K.
+!       We can thus consider the emissivity to be related to this difference.
+        BBTS = 5780.
+        CCTS = 5900. 
+        emissivity = (BBTS / CCTS)**4.
         DS = 1.0 * 1.496e13 ! au to cm
         RS = 1.0 * 6.96e10  ! solar radii to cm
         xc = 0.; yc = 0.; zc = 0.
@@ -272,10 +278,10 @@
         do ic = 1,nc   
           W = wa(ic) * 1e-4 ! microns to cm  
           w_ang = wa(ic) * 10000.
-          BB = (.0000374/(W**5.)) / (EXP(1.43/(W*TS))-1.)
+          BB = (.0000374/(W**5.)) / (EXP(1.43/(W*CCTS))-1.)
           if(iverbose .eq. 1)write(6,*)'ic/w/bb',ic,w,bb
-          FA(IC)=((RS/DS)**2)*BB*1E-8 ! erg/cm2/s/A
-          FA(IC)=FA(IC) * .01         ! convert to W/m2/nm
+          FA(IC)=((RS/DS)**2)*BB*emissivity*1E-8 ! erg/cm2/s/A
+          FA(IC)=FA(IC) * .01                    ! convert to W/m2/nm
         enddo ! ic
 
         if(iverbose .eq. 1)write(6,*)'fa sun (W/m2/nm) is ',fa
