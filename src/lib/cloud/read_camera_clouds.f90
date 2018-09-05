@@ -234,7 +234,7 @@
        end
 
        subroutine get_camera_image(minalt,maxalt,minazi,maxazi,nc,alt_scale,azi_scale, & ! I
-                                   i4time,fname_ppm,mode,site, &                         ! I
+                                   i4time,mode,site, &                         ! I
                                    rcam_rgb,istatus)                                     ! O
  
        use ppm
@@ -306,7 +306,7 @@
          write(6,*)trim(convert_cmd)
          call system(trim(convert_cmd))
 
-         call sleep(1)
+!        call sleep(1)
 
          open(u,file=trim(img_ppm),status='old',err=999)
          read(u,*)   
