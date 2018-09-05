@@ -462,6 +462,7 @@
 
        file=trim(directory)//'viirs_global_montage_20.ppm' 
        inquire(file=trim(file),exist=l_there)
+       write(6,*)' PPM file being inquired is ',trim(file),' ',l_there
        if(l_there)then                     ! local domain (2.5km pixels)
          pix_latlon = 1. / 48.             ! 17280x8640 image
          offset_lat = 0.     ! positional error in remapping
