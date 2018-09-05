@@ -19,15 +19,13 @@
      1                     ,l_solar_eclipse,eobsc,emag              ! I
      1                     ,rlat,rlon,lat,lon                       ! I
      1                     ,minalt,maxalt,minazi,maxazi,nsp         ! I
-     1                     ,ni_cyl,nj_cyl                           ! O
+     1                     ,ni_cyl,nj_cyl,elong_a                   ! O
      1                     ,alt_scale,azi_scale                     ! I
      1                     ,grid_spacing_m,r_missing_data           ! I
      1                     ,l_binary,l_terrain_following            ! I
      1                     ,mode_cloud_mask,camera_cloud_mask       ! I
-     1                     ,iloop                                   ! I
      1                     ,cloud_od,dist_2_topo                    ! O
-     1                     ,camera_rgb                              ! O
-     1                     ,sky_rgb_cyl,correlation,a_t,b_t,istatus)! O
+     1                     ,sky_rgb_cyl,istatus)                    ! O
 
         use mem_allsky
         use mem_namelist, ONLY: earth_radius, ssa
@@ -79,11 +77,7 @@
         real moon_azi_2d(NX_L,NY_L)
         real lat(NX_L,NY_L)
         real lon(NX_L,NY_L)
-        real camera_rgb(nc,minalt:maxalt,minazi:maxazi)
-        real camera_rgbf(nc,minalt:maxalt,minazi:maxazi)
-        real wt_a(minalt:maxalt,minazi:maxazi)
         real elong_a(minalt:maxalt,minazi:maxazi)
-        real correlation(nc),xbar_a(nc),ybar_a(nc),a_t(nc),b_t(nc)
         integer camera_cloud_mask(minalt:maxalt,minazi:maxazi)
         integer sim_cloud_mask(minalt:maxalt,minazi:maxazi)
         integer diff_cloud_mask(minalt:maxalt,minazi:maxazi)
@@ -146,15 +140,14 @@
 
         real moon_mag,moon_mag_thr
         real*8 bi_coeff(2,2),ritopo,rjtopo,fi,fj
-        logical l_solar_eclipse, l_binary, l_zod, l_phase
+        logical l_solar_eclipse, l_binary, l_phase
         logical l_terrain_following
 
-        character*10 site, fname_ppm
         integer mode_cloud_mask ! 1 is ignore cloud mask
                                 ! 2 is display cloud mask differences
                                 ! 3 perform cloud mask clearing
-                                ! 4 display correlation coefficient
-                                ! 5 correlation coefficient + optimize
+                                ! 4 no action
+                                ! 5 no action
 
         write(6,*)' subroutine calc_allsky...'
 
@@ -711,93 +704,8 @@
               endif
 
           else ! mode_cloud_mask = 4 or 5 (correlation)
-              I4_elapsed = ishow_timer()
+              continue
 
-              if(iloop .eq. 1 .OR. .true.)then
-                write(6,*)' Calling get_camera_image: mode_cloud_mask'
-     1                    ,mode_cloud_mask
-                mode_cam = 2
-                call get_camsite(rlat,rlon,site)
-                if(trim(site) .eq. 'dsrc')then
-                  i4time_camera = i4time_solar - 60
-                else
-                  i4time_camera = i4time_solar
-                endif
-                call get_camera_image(minalt,maxalt,minazi,maxazi,nc,     ! I
-     1                                alt_scale,azi_scale,                ! I
-     1                                i4time_camera,fname_ppm,mode_cam,   ! I
-     1                                site,                               ! I
-     1                                camera_rgb,istatus)                 ! O
-                if(istatus .eq. 0)then
-                  write(6,*)' return from calc_allsky sans camera image'
-                  istatus = 1 ! keep going anyway in parent routine
-                  return
-                endif
-
-                I4_elapsed = ishow_timer()
-
-!               Subsample flagged array to account to weight cylindrical projection             
-                iskip_max = 6
-                do ialt = maxalt,minalt,-1
-                  if(ialt .eq. maxalt)then
-                    iskip = iskip_max
-                  else
-                    iskip = nint(1./cosd(alt_a_roll(ialt,minazi)))
-                    iskip = min(iskip,iskip_max)
-                  endif
-                  do jazi = minazi,maxazi
-                    if(jazi .eq. (jazi/iskip)*iskip)then
-                      camera_rgbf(:,ialt,jazi) = camera_rgb(:,ialt,jazi)
-                    else
-                      camera_rgbf(:,ialt,jazi) = r_missing_data
-                    endif
-                    if(elong_a(ialt,jazi) .lt. 3.0)then
-                      camera_rgbf(:,ialt,jazi) = r_missing_data
-                    endif
-                  enddo ! jazi
-                enddo ! ialt
-              else
-                write(6,*)' skip cam img read - use saved array:',
-     1                    'mode_cloud_mask=',mode_cloud_mask,iloop
-              endif ! iloop
-
-              cam_checksum = sum(min(camera_rgbf,255.))
-              write(6,*)' camera_rgbf checksum = ',cam_checksum
-              if(cam_checksum .gt. 0. .and. cam_checksum .lt. 1.0)then
-                write(6,*)' WARNING: 0 < cam_checksum < 1'
-                istatus = 0
-                return
-              endif
-
-!             We have a choice of doing the weighting by setting pixels
-!             to missing, or by passing in variable weights
-              write(6,*)' Performing correlation calculation (stats_2d)'
-              wt_a(:,:) = 1.0
-              do ic = 1,nc
-                call stats_2d(maxalt-minalt+1,maxazi-minazi+1
-     1                       ,camera_rgbf(ic,:,:),sky_rgb_cyl(ic-1,:,:)
-     1                       ,wt_a,a_t(ic),b_t(ic),xbar_a(ic),ybar_a(ic)
-     1                       ,correlation(ic),bias,std
-     1                       ,r_missing_data,istatus)
-              enddo
-
-              corr_scaling = sum(ybar_a(:)) / sum(xbar_a(:))
-              write(6,*)' correlation scaling (sim/cam) is '
-     1                  ,corr_scaling
-              if(corr_scaling .lt. 1.0)then
-                write(6,*)' brightening simulated image to match camera'
-                sky_rgb_cyl(:,:,:) =
-     1                 min(sky_rgb_cyl(:,:,:)/corr_scaling,255.)
-                a_t(:) = a_t(:) / corr_scaling
-                b_t(:) = b_t(:) / corr_scaling
-              else
-                write(6,*)' simulated image is brighter than camera'
-              endif
-              write(6,*)' a_t is ',a_t
-              write(6,*)' b_t is ',b_t
-
-              I4_elapsed = ishow_timer()
-  
           endif
 
           write(6,*)' End of calc_allsky...'
@@ -1081,8 +989,6 @@
 
         use ppm
 
-        real topo_ri(minalt:maxalt,minazi:maxazi)
-        real topo_rj(minalt:maxalt,minazi:maxazi)
         real topo_albedo(nc,minalt:maxalt,minazi:maxazi)
 
         real nlattile
@@ -1096,7 +1002,6 @@
         integer, allocatable :: img(:,:,:)                   
 
         character*255 directory, file_dc, file
-        character*10  c10_fname /'nest7grid'/
         character*20 adum,ctype,cropname
         integer u,u_out
         logical l_there_dc
@@ -1273,7 +1178,8 @@
         return
         end
 
-        subroutine diffimg(img1,img2,nc,ni,nj,a_t,b_t,fname)
+        subroutine diffimg(img1,img2,nc,ni,nj,a_t,b_t
+     1                    ,isun,jsun,idb,fname)
 
         use ppm
 
@@ -1283,19 +1189,150 @@
 
         character*(*)fname
 
-        write(6,*)' taking difference image ',trim(fname),ni,nj
+        write(6,*)
+        write(6,*)' subroutine diffimg...'
+        write(6,*)' cam-sim difference image ',trim(fname),ni,nj
+        write(6,*)' a_t is ',a_t
+        write(6,*)' b_t is ',b_t
 
 !       Determine difference WRT regression line
         do ic = 1,nc
-            tmp1(:,:) = img1(ic,:,:)
-            tmp2(:,:) = img2(ic,:,:)
-            imgdiff(ic,:,:) = 128 +
-     1        nint( tmp2(:,:) - (a_t(ic) * tmp1(:,:) + b_t(ic)) )
+            tmp1(:,:) = img1(ic,:,:)       ! sim
+            tmp2(:,:) = img2(ic,:,:)       ! cam
+            imgdiff(ic,:,:) = 128 +        ! WRT scaled images
+     1        nint( tmp2(:,:) - tmp1(:,:) ) 
+!           imgdiff(ic,:,:) = 128 +        ! WRT regression line
+!    1        nint( tmp2(:,:) - (a_t(ic) * tmp1(:,:) + b_t(ic)) )
+!           imgdiff(ic,:,:) = img1(ic,:,:) ! test simulated image
+!           imgdiff(ic,:,:) = img2(ic,:,:) ! test camera image
+
+            imgdiff(ic,:,:) = min(max(imgdiff(ic,:,:),0),255)
         enddo ! ic
 
-        call writeppm3Matrix(imgdiff(0,:,:),imgdiff(1,:,:)
-     1                      ,imgdiff(2,:,:)
+        call writeppm3Matrix(imgdiff(1,:,:),imgdiff(2,:,:)
+     1                      ,imgdiff(3,:,:)
      1                      ,trim(fname))
+
+        if(idb .ge. 1)then
+            write(6,*)' top sim  = ',img1(:,ni,1)
+            write(6,*)' top cam  = ',img2(:,ni,1)
+            write(6,*)' top diff = ',imgdiff(:,ni,1)
+            write(6,*)' solar sim  = ',img1(:,isun,jsun)
+            write(6,*)' solar cam  = ',img2(:,isun,jsun)
+            write(6,*)' solar diff = ',imgdiff(:,isun,jsun)
+        endif
+
+        return
+        end
+
+        subroutine compare_camera(iloop,rlat,rlon,nc                  ! I
+     1                           ,minalt,maxalt,minazi,maxazi         ! I
+     1                           ,alt_scale,azi_scale,camera_rgb      ! I
+     1                           ,i4time_solar,isun,jsun,idb          ! I
+     1                           ,alt_a_roll,elong_a,r_missing_data   ! I
+     1                           ,sky_rgb_cyl                         ! I/O
+     1                           ,correlation,a_t,b_t                 ! O
+     1                           ,istatus)                            ! O
+
+        include 'trigd.inc'
+
+        real camera_rgb(nc,minalt:maxalt,minazi:maxazi)
+        real camera_rgbf(nc,minalt:maxalt,minazi:maxazi)
+        real wt_a(minalt:maxalt,minazi:maxazi)
+        real alt_a_roll(minalt:maxalt,minazi:maxazi)
+        real elong_a(minalt:maxalt,minazi:maxazi)
+        real sky_rgb_cyl(0:2,minalt:maxalt,minazi:maxazi) ! Observed Variable
+        real correlation(nc),xbar_a(nc),ybar_a(nc),a_t(nc),b_t(nc)
+        character*10 site
+        
+
+        if(iloop .eq. 1 .OR. .true.)then
+            write(6,*)' Calling get_camera_image: ',rlat,rlon
+            mode_cam = 2
+            call get_camsite(rlat,rlon,site)
+            if(trim(site) .eq. 'dsrc')then
+                  i4time_camera = i4time_solar - 60
+            else
+                  i4time_camera = i4time_solar
+            endif
+            call get_camera_image(minalt,maxalt,minazi,maxazi,nc,         ! I
+     1                                alt_scale,azi_scale,                ! I
+     1                                i4time_camera,mode_cam,             ! I
+     1                                site,                               ! I
+     1                                camera_rgb,istatus)                 ! O
+            if(istatus .eq. 0)then
+                  write(6,*)' return from calc_allsky sans camera image'
+                  return
+            endif
+
+            I4_elapsed = ishow_timer()
+            wt_a(:,:) = 1.0
+
+!           Subsample flagged array to account to weight cylindrical projection             
+            iskip_max = 6
+            do ialt = maxalt,minalt,-1
+                  if(ialt .eq. maxalt)then
+                    iskip = iskip_max
+                  else
+                    iskip = nint(1./cosd(alt_a_roll(ialt,minazi)))
+                    iskip = min(iskip,iskip_max)
+                  endif
+                  do jazi = minazi,maxazi
+                    if(jazi .eq. (jazi/iskip)*iskip)then
+                      camera_rgbf(:,ialt,jazi) = camera_rgb(:,ialt,jazi)
+                    else
+!                     camera_rgbf(:,ialt,jazi) = r_missing_data
+                      wt_a(ialt,jazi) = 0.0
+                    endif
+                    if(elong_a(ialt,jazi) .lt. 3.0)then
+!                     camera_rgbf(:,ialt,jazi) = r_missing_data
+                      wt_a(ialt,jazi) = 0.0
+                    endif
+                  enddo ! jazi
+            enddo ! ialt
+        else
+            write(6,*)' skip cam img read - use saved array'
+        endif ! iloop
+
+        cam_checksum = sum(min(camera_rgbf,255.))
+        write(6,*)' camera_rgbf checksum = ',cam_checksum
+        if(cam_checksum .gt. 0. .and. cam_checksum .lt. 1.0)then
+            write(6,*)' WARNING: 0 < cam_checksum < 1'
+            istatus = 0
+            return
+        endif
+
+!       We have a choice of doing the weighting by setting pixels
+!       to missing, or by passing in variable weights
+        write(6,*)' Performing correlation calculation (stats_2d)'
+        do ic = 1,nc
+            call stats_2d(maxalt-minalt+1,maxazi-minazi+1
+     1                       ,camera_rgbf(ic,:,:),sky_rgb_cyl(ic-1,:,:)
+     1                       ,wt_a,a_t(ic),b_t(ic),xbar_a(ic),ybar_a(ic)
+     1                       ,correlation(ic),bias,std
+     1                       ,r_missing_data,istatus)
+        enddo
+
+        corr_scaling = sum(ybar_a(:)) / sum(xbar_a(:))
+        write(6,*)' correlation scaling (sim/cam) is '
+     1                  ,corr_scaling
+        if(corr_scaling .lt. 1.0)then
+            write(6,*)' brightening simulated image to match camera'
+            sky_rgb_cyl(:,:,:) =
+     1                 min(sky_rgb_cyl(:,:,:)/corr_scaling,255.)
+            a_t(:) = a_t(:) / corr_scaling
+            b_t(:) = b_t(:) / corr_scaling
+        else
+            write(6,*)' simulated image is brighter than camera'
+        endif
+
+        if(idb .eq. 1)then
+           write(6,*)' solar sim = ',sky_rgb_cyl(:,isun,jsun)
+           write(6,*)' solar cam = ',camera_rgbf(:,isun,jsun)
+        endif
+
+        write(6,*)' a_t is ',a_t
+        write(6,*)' b_t is ',b_t
 
         return
         end
