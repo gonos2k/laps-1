@@ -249,7 +249,7 @@
         endif
 
         write(6,10)corr1_in,exposure,obs_glow_gnd,corr2_orig,obs_glow_log,twi_ramp,corr2
-10      format('  corr1_in/exposure/obs_glow_gnd/corr2orig/oglog/rmp/corr2 ',2f9.3,e12.5,4f9.2)
+10      format('  corr1_in/exposure/obs_glow_gnd/corr2orig/oglog/rmp/corr2 ',f9.3,f13.3,e12.5,4f9.2)
 
         if(sol_alt .le. 0.)then
 
