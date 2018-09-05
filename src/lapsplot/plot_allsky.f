@@ -119,6 +119,7 @@
 
         real, allocatable, dimension(:,:) :: alt_a_roll
         real, allocatable, dimension(:,:) :: azi_a_roll
+        real, allocatable, dimension(:,:) :: elong_a
         real, allocatable, dimension(:,:) :: cloud_od
         integer, allocatable, dimension(:,:) :: camera_cloud_mask
         real, allocatable, dimension(:,:,:) :: camera_rgb
@@ -126,7 +127,6 @@
 
         real alt_a_polar(iplo:iphi,jplo:jphi)
         real azi_a_polar(iplo:iphi,jplo:jphi)
-        real elong_a_polar(iplo:iphi,jplo:jphi)
 
         integer maxloc
         parameter (maxloc = 1000)
@@ -140,6 +140,7 @@
 !       integer isky_rgb_polar(0:2,ni_polar,nj_polar)
 
         real, allocatable, dimension(:,:,:) :: sky_rgb_cyl
+        real, allocatable, dimension(:,:,:,:,:) :: sky_rgb_cyl_outer
         integer, allocatable, dimension(:,:,:) :: isky_rgb_cyl
         real correlation(nc,maxloc),a_t(nc,maxloc),b_t(nc,maxloc)
         integer mode_cloud_mask /4/ ! ignore the mask
@@ -1293,6 +1294,10 @@
             init_optmiz = 0
             iexit_optimize = 0
 
+            max_outer_loops = 2
+            allocate(sky_rgb_cyl_outer(0:2,minalt:maxalt,minazi:maxazi
+     1                                ,nloc,max_outer_loops))
+
         else ! standard run
             nloops = 1
 
@@ -1395,6 +1400,7 @@
 
             allocate(alt_a_roll(minalt:maxalt,minazi:maxazi))
             allocate(azi_a_roll(minalt:maxalt,minazi:maxazi))
+            allocate(elong_a(minalt:maxalt,minazi:maxazi))
             allocate(cloud_od(minalt:maxalt,minazi:maxazi))
             allocate(camera_cloud_mask(minalt:maxalt,minazi:maxazi))
             allocate(camera_rgb(nc,minalt:maxalt,minazi:maxazi))
@@ -1634,25 +1640,42 @@
      1                     ,l_solar_eclipse,eobsc,emag              ! I
      1                     ,rlat,rlon,lat,lon                       ! I
      1                     ,minalt,maxalt,minazi,maxazi,nsp         ! I
-     1                     ,ni_cyl,nj_cyl                           ! O
+     1                     ,ni_cyl,nj_cyl,elong_a                   ! O
      1                     ,alt_scale,azi_scale                     ! I
      1                     ,grid_spacing_m,r_missing_data           ! I
      1                     ,l_binary,l_terrain_following            ! I
      1                     ,mode_cloud_mask,camera_cloud_mask       ! I
-     1                     ,iloop                                   ! I
      1                     ,cloud_od,dist_2_topo                    ! O
-     1                     ,camera_rgb                              ! O
-     1                     ,sky_rgb_cyl,correlation(:,iloc)         ! O
-     1                     ,a_t(:,iloc),b_t(:,iloc),istatus)        ! O
+     1                     ,sky_rgb_cyl                             ! O
+     1                     ,istatus)                                ! O
             if(istatus .ne. 1)then
               write(6,*)' Error istatus returned from calc_allsky'
               return
             endif
 
-!           For multiple sites we can move this outside 'iloc' loop past
-!           line 1725
-
             if(mode_cloud_mask .eq. 4  .or. mode_cloud_mask .eq. 5)then
+ !              Note that 'sky_rgb_cyl' is brightened to match camera
+                isun = minalt + nint(solar_alt / alt_scale)
+                jsun = minazi + nint(solar_az / azi_scale)
+
+                if(isun .ge. minalt .and. isun .le. maxalt .and.
+     1             jsun .ge. minazi .and. jsun .le. maxazi)then        
+                    idbsun = 1
+                else
+                    idbsun = 0
+                endif
+
+                call compare_camera(
+     1                            iloop,rlat,rlon,nc                  ! I   
+     1                           ,minalt,maxalt,minazi,maxazi         ! I
+     1                           ,alt_scale,azi_scale,camera_rgb      ! I
+     1                           ,i4time_solar,isun,jsun,idbsun       ! I
+     1                           ,alt_a_roll,elong_a,r_missing_data   ! I
+     1                           ,sky_rgb_cyl                         ! I/O
+     1                           ,correlation(:,iloc)                 ! O
+     1                           ,a_t(:,iloc),b_t(:,iloc)             ! O
+     1                           ,istat_cam)                          ! O
+
               avecorr = sum(correlation(:,iloc))/float(nc)
               write(6,46)correlation(:,iloc),avecorr
 46            format('correlation is ',3f9.6,2x,f9.6,' incremental')
@@ -1723,11 +1746,11 @@
               solalt_limb_true = solar_alt + horz_dep
               write(6,*)' solalt_limb_true is',solalt_limb_true
 
-                if(solalt_limb_true .lt. -10.0)then
+              if(solalt_limb_true .lt. -10.0)then
                    dither = 2.0
-                else
+              else
                    dither = 0.0
-                endif
+              endif
 
               if(l_cyl .eqv. .true.)then
 !               Write all sky for cyl
@@ -1762,12 +1785,17 @@
                     enddo ! ialt 
                 else
                     isky_rgb_cyl = sky_rgb_cyl   
-                endif                                       
+                endif ! dither > 0.                                      
 
-                if(mode_cloud_mask .eq. 4)then
-                  call diffimg(isky_rgb_cyl,nint(min(camera_rgb,255.))
+                if(mode_cloud_mask .eq. 4 .and. istat_cam .eq. 1)then
+                  if(idbsun .ge. 1)then
+                    isun2 = (isun-minalt)+1
+                    jsun2 = (jsun-minazi)+1
+                  endif
+                  call diffimg(isky_rgb_cyl,nint(min(camera_rgb,255.)) 
      1                        ,nc,maxalt-minalt+1,maxazi-minazi+1
      1                        ,a_t(:,iloc),b_t(:,iloc)
+     1                        ,isun2,jsun2,idbsun
      1                        ,'allsky_rgb_cyl_diff_'//trim(clun_loop))
                 endif
 
@@ -1918,7 +1946,7 @@
                   enddo ! j
                   enddo ! i 
                 else
-                isky_rgb_polar = sky_rgb_polar
+                  isky_rgb_polar = sky_rgb_polar
                 endif                                       
 
                 write(6,*)' max polar 1 is ',maxval(sky_rgb_polar)
@@ -1969,6 +1997,7 @@
             deallocate(aod_ill_opac_potl)
             deallocate(alt_a_roll)
             deallocate(azi_a_roll)
+            deallocate(elong_a)
             deallocate(cloud_od)
             deallocate(camera_cloud_mask)
             deallocate(camera_rgb)
@@ -1982,6 +2011,11 @@
             write(6,*)
 
             I4_elapsed = ishow_timer()
+
+!           Copy image to outer loop array
+            if(mode_cloud_mask .eq. 5 .and. iloop .le. 2)then
+              continue              
+            endif
 
             deallocate(sky_rgb_cyl)
             deallocate(isky_rgb_cyl)
@@ -2000,6 +2034,7 @@
           endif
 
           if(mode_cloud_mask .eq. 5)then
+
               write(6,*)'Update a vector and corresponding parameters'
               a_last(:) = a_vec(:)
 
@@ -2032,6 +2067,7 @@
         enddo ! iloop for optimize
 
 1900    call dealloc_allsky
+        if(allocated(sky_rgb_cyl_outer))deallocate(sky_rgb_cyl_outer)
 
         write(6,*)
         write(6,*)' End of plot_allsky...'
