@@ -238,6 +238,13 @@ if($opt_o eq "mm"){
    print "$mo/$dy/$yr $hr:$mn\n";
 #  print "$yydddhhmm\n";
 
+}elsif($opt_o eq "ascii_time2"){
+   my @i4time = &laps_tools::a9time_to_i4time($yydddhhmm);
+   my ($yr,$mo,$dy,$hr,$mn,$sc) = &laps_tools::i4time_to_date($i4time[0]-315619200);
+   $hr="0".$hr if(length($hr)<2);
+   $mn="0".$mn if(length($mn)<2);
+   print "$dy-$MON[$mo-1]-$yr $hr:$mn\n";
+
 }elsif($opt_o eq "i4time"){
    print "$i4time_1970\n";
 
