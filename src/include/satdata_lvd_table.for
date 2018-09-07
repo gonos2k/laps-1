@@ -1,3 +1,5 @@
+!     This file is included in src/lib/read_namelist.f
+
       character*6 satellite_ids(maxsat)
       character*3 satellite_types(maxtype,maxsat)
       character*3 satellite_channels(maxtype,maxchannel,maxsat)
@@ -42,8 +44,8 @@
      4              'gvr','wfo','cdf','rll',
      5              'gvr','wfo','cdf','rll',
      6              'gvr','wfo','cdf','rll',
-     7              'gnp','   ','   ','   ',
-     8              'gnp','   ','   ','   ',
+     7              'gnp','gr2','   ','   ',
+     8              'gnp','gr2','   ','   ',
      9              'cms','   ','   ','   ',
      .              'rll','nll','jma','   ',
      1              'rll','nll','jma','   '/
