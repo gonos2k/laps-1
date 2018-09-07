@@ -145,10 +145,19 @@ in several formats:
     2. wfo SBN: also netcdf and lambert projection (type=wfo)
     3. AirForce Global Weather Center              (type=gwc)
     4. GVAR NetCDF data with 2-d lat/lons added    (type=rll)
-    5  GOES-R NOAAPORT geostationary projection    (type=gnp)
-    6. KMA COMS satellite                          (type=cms)
-    7. Himawari NetCDF with 1-d lat/lons added     (type=nll)
-    8. Himawari NetCDF (from jma FTP site)         (type=jma)
+    5. GOES-R NOAAPORT geostationary projection    (type=gnp)
+    6. GOES-R NetCDF L2 geostationary projection   (type=gr2)
+    7. KMA COMS satellite                          (type=cms)
+    8. Himawari NetCDF with 1-d lat/lons added     (type=nll)
+    9. Himawari NetCDF (from jma FTP site)         (type=jma)
 
 A more comprehensive table showing the supported satellite IDs and Types can be
 found in 'src/includ/satdata_lvd_table.for'.
+
+The JMA FTP site is at 'ftp://onepieceze_163.com:SP+wari8@ftp.ptree.jaxa.jp'.
+After downloading the files should be renamed to something like
+'180770400_jma.nc', where the time string is in yydddhhmm format. An example
+'wget' command is this:
+
+wget ftp://onepieceze_163.com:SP+wari8@ftp.ptree.jaxa.jp/jma/netcdf/201807
+/28/NC_H08_20180728_0110_R21_FLDK.02401_02401.nc
