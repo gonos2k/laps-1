@@ -24,7 +24,22 @@
   if test "$MODE_ALLSKY" = "polar" || test "$MODE_ALLSKY" = "both"; then
     IMGGEOM=`identify allsky_polar_$ILOC.png | awk '{print tolower($3)}'`
     echo "polar IMGGEOM = $IMGGEOM"
-    convert -fill white -annotate +5+20  "Simulated" -pointsize 18 allsky_polar_$ILOC.png allsky_polar_$ILOC.png
+
+    if test "$IMGGEOM" = "511x511"; then
+      POINTP=16
+    elif test "$IMGGEOM" = "1023x1023"; then
+      POINTP=22
+    elif test "$IMGGEOM" = "1535x1535"; then
+      POINTP=22
+    elif test "$IMGGEOM" = "2047x2047"; then
+      POINTP=22
+    elif test "$IMGGEOM" = "2559x2559"; then
+      POINTP=22
+    else
+      POINTP=22
+    fi
+
+    convert -fill white -annotate +5+20  "Simulated" -pointsize $POINTP allsky_polar_$ILOC.png allsky_polar_$ILOC.png
   fi
 
   if test "$MODE_ALLSKY" = "cyl" || test "$MODE_ALLSKY" = "both"; then
@@ -48,7 +63,12 @@
   fi
   
 # Annotate Time and GHI
-  ATIME=`head -2 label.$ILOC | tail -1`
+  
+  if test -n "$ANNOTATE_TIME"; then
+      ATIME=$ANNOTATE_TIME
+  else
+      ATIME=`head -2 label.$ILOC | tail -1`
+  fi
   ATIME=`echo $ATIME | sed 's/^[ \t]*//'` # remove leading spaces
   GHIUNITS=W/m^2
   GHI=`head -6 label2.$ILOC | tail -1`$GHIUNITS
@@ -56,21 +76,20 @@
   echo "Annotate Time $ATIME and GHI $GHI"
   if test "$MODE_ALLSKY" = "polar" || test "$MODE_ALLSKY" = "both"; then
    if test "$IMGGEOM" = "511x511"; then
-    POINTP=16
     echo 'convert -fill white -annotate +360+503  "$ATIME" -pointsize $POINTP allsky_polar_$ILOC.png allsky_polar_$ILOC.png'
           convert -fill white -annotate +360+503  "$ATIME" -pointsize $POINTP allsky_polar_$ILOC.png allsky_polar_$ILOC.png
    elif test "$IMGGEOM" = "1023x1023"; then
-    POINTP=22
     convert -fill white -annotate +770+1003 "$ATIME" -pointsize $POINTP allsky_polar_$ILOC.png allsky_polar_$ILOC.png
    elif test "$IMGGEOM" = "1535x1535"; then
-    convert -fill white -annotate +1080+1527 "$ATIME" -pointsize 15 allsky_polar_$ILOC.png allsky_polar_$ILOC.png
+    convert -fill white -annotate +1230+1527 "$ATIME" -pointsize $POINTP allsky_polar_$ILOC.png allsky_polar_$ILOC.png
    elif test "$IMGGEOM" = "2047x2047"; then
-    convert -fill white -annotate +1440+2039 "$ATIME" -pointsize 15 allsky_polar_$ILOC.png allsky_polar_$ILOC.png
+    convert -fill white -annotate +1440+2039 "$ATIME" -pointsize $POINTP allsky_polar_$ILOC.png allsky_polar_$ILOC.png
    elif test "$IMGGEOM" = "2559x2559"; then
-    convert -fill white -annotate +2300+2531 "$ATIME" -pointsize 18 allsky_polar_$ILOC.png allsky_polar_$ILOC.png
+    convert -fill white -annotate +2300+2531 "$ATIME" -pointsize $POINTP allsky_polar_$ILOC.png allsky_polar_$ILOC.png
    else
-    convert -fill white -annotate +1080+1527 "$ATIME" -pointsize 15 allsky_polar_$ILOC.png allsky_polar_$ILOC.png
+    convert -fill white -annotate +1080+1527 "$ATIME" -pointsize $POINTP allsky_polar_$ILOC.png allsky_polar_$ILOC.png
    fi
+   echo "POINTP is $POINTP"
   fi
 
   if test "$MODE_ALLSKY" = "cyl" || test "$MODE_ALLSKY" = "both"; then
@@ -126,11 +145,11 @@
     echo "convert -fill white -annotate +875+20 "$LATLON" -pointsize 18 allsky_polar_$ILOC.png allsky_polar_$ILOC.png"
           convert -fill white -annotate +875+20 "$LATLON" -pointsize 18 allsky_polar_$ILOC.png allsky_polar_$ILOC.png
    elif test "$IMGGEOM" = "2559x2559"; then
-    echo "convert -fill white -annotate +2300+20 "$LATLON" -pointsize 18 allsky_polar_$ILOC.png allsky_polar_$ILOC.png"
-          convert -fill white -annotate +2300+20 "$LATLON" -pointsize 18 allsky_polar_$ILOC.png allsky_polar_$ILOC.png
+    echo "convert -fill white -annotate +2300+20 "$LATLON" -pointsize 22 allsky_polar_$ILOC.png allsky_polar_$ILOC.png"
+          convert -fill white -annotate +2300+20 "$LATLON" -pointsize 22 allsky_polar_$ILOC.png allsky_polar_$ILOC.png
    else # 1535x1535
-    echo "convert -fill white -annotate +1320+20 "$LATLON2" -pointsize 18 allsky_polar_$ILOC.png allsky_polar_$ILOC.png"
-          convert -fill white -annotate +1320+20 "$LATLON2" -pointsize 18 allsky_polar_$ILOC.png allsky_polar_$ILOC.png
+    echo "convert -fill white -annotate +1260+20 "$LATLON2" -pointsize $POINTP allsky_polar_$ILOC.png allsky_polar_$ILOC.png"
+          convert -fill white -annotate +1260+20 "$LATLON2" -pointsize $POINTP allsky_polar_$ILOC.png allsky_polar_$ILOC.png
    fi
   fi
 
@@ -152,7 +171,7 @@
   if test "$MODE_ALLSKY" = "polar" || test "$MODE_ALLSKY" = "both"; then
     if test "$GHI" != ""; then
       LL=$GHI
-      LLPOINT=16
+      LLPOINT=$POINTP
     else
       LL=All-sky
       LLPOINT=18
@@ -163,7 +182,7 @@
     elif test "$IMGGEOM" = "1023x1023"; then
       convert -fill white -annotate +20+1003 "$LL"   -pointsize $POINTP allsky_polar_$ILOC.png allsky_polar_$ILOC.png
     elif test "$IMGGEOM" = "1535x1535"; then
-      convert -fill white -annotate +20+1524 "$LL"   -pointsize 20 allsky_polar_$ILOC.png allsky_polar_$ILOC.png
+      convert -fill white -annotate +20+1524 "$LL"   -pointsize $POINTP allsky_polar_$ILOC.png allsky_polar_$ILOC.png
     elif test "$IMGGEOM" = "2047x2047"; then
       convert -fill white -annotate +20+1524 "$LL"   -pointsize 20 allsky_polar_$ILOC.png allsky_polar_$ILOC.png
     elif test "$IMGGEOM" = "2559x2559"; then
