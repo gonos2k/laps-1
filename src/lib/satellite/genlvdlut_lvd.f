@@ -75,6 +75,7 @@ c
       if(c_sat_types(it,js).eq.'cdf'.or.
      &   c_sat_types(it,js).eq.'wfo'.or.
      &   c_sat_types(it,js).eq.'twn'.or.
+     &   c_sat_types(it,js).eq.'gr2'.or.
      &   c_sat_types(it,js).eq.'gnp')then
 
          do lc=1,maxchannel
@@ -85,7 +86,8 @@ c
      &c_channel_types(lc,it,js)
 59           format(/,'Generate Mapping Arrays: ',a6,"/",a3,"/",a3)
 
-             if(c_sat_types(it,js).eq.'gnp')then
+             if(c_sat_types(it,js).eq.'gnp' .or.
+     &          c_sat_types(it,js).eq.'gr2')then
                 call gen_lut_fx(js,it,lc,nx_l,ny_l,
      &                lat,lon,gri(1,1,lc),grj(1,1,lc),istatus)
              else
