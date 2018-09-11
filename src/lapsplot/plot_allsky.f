@@ -1794,7 +1794,7 @@
                   endif
                   call diffimg(isky_rgb_cyl,nint(min(camera_rgb,255.)) 
      1                        ,nc,maxalt-minalt+1,maxazi-minazi+1
-     1                        ,a_t(:,iloc),b_t(:,iloc)
+     1                        ,a_t(:,iloc),b_t(:,iloc),avecorr
      1                        ,isun2,jsun2,idbsun
      1                        ,'allsky_rgb_cyl_diff_'//trim(clun_loop))
                 endif
