@@ -2,6 +2,7 @@
         subroutine get_airglow(alt_a,ni,nj,nc,obs_glow_zen,i4time & ! I
                               ,patm,htmsl,horz_dep &                ! I
                               ,airmass_2_topo,frac_lp &             ! I
+                              ,airglow_zen_nl_c &                   ! O
                               ,clear_rad_c_nt)                      ! O
 
 !       Calculate sky glow due to airglow. This takes into
@@ -14,8 +15,9 @@
         include 'rad_nodata.inc'
 
         real alt_a(ni,nj) 
-        real clear_rad_c_nt(nc,ni,nj)     ! night sky brightness
-                                          ! 3 color radiance (Nanolamberts)
+        real clear_rad_c_nt(nc,ni,nj) ! night sky brightness
+                                      ! 3 color radiance (Nanolamberts)
+        real airglow_zen_nl_c(nc)     ! airglow spectral radiance at zenith (nL)
 
         parameter (nlyr = 2)
 
@@ -38,6 +40,11 @@
         write(6,*)' get_airglow: Besselian Year is      ',by,i4time
         write(6,*)' get_airglow: sunspot cycle (deg) is ',sunspot_cycle_deg
         write(6,*)' get_airglow: airglow_zen_nl (nL) is ',airglow_zen_nl
+
+!       Convert from nl to sprad, then to spirrad
+        airglow_zen_nl_c(1) = airglow_zen_nl * 1.667
+        airglow_zen_nl_c(2) = airglow_zen_nl * 1.000
+        airglow_zen_nl_c(3) = airglow_zen_nl * 0.467
 
         do ialt = 1,ni ! Process all azimuths at once for this altitude
 
