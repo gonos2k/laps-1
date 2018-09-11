@@ -51,8 +51,11 @@
 !  is the data value at each gridpoint
 !
       if (nbits.ne.0) then
-!         call gbytes(cpack,ifld,0,nbits,0,ndpts)
+         call gbytes(cpack,ifld,0,nbits,0,ndpts)
          iret=dec_jpeg2000(cpack,len,ifld)
+!        write(6,*)
+!    1     ' ERROR in jpcunpack.F: attempt to use unavailable routines'
+!        stop
          do j=1,ndpts
            fld(j)=((real(ifld(j))*bscale)+ref)*dscale
          enddo
