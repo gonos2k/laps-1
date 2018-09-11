@@ -97,7 +97,8 @@
      enddo ! i
      enddo ! k
 
-     transm_4d = 0.                   
+     transm_4d = 0.
+     idbr = 6
 
      write(6,*)' transm_3d column 1 = ',transm_3d(idb,jdb,:)
 
@@ -234,6 +235,7 @@
          if(idebug .eq. 1)write(6,1)if,it,jt,kt
 1        format(4i3)
          frac_abv_terrain = 1.0
+         lslast = -1
          do ls = 0,4000 ! max number of ray segments
 
            if(ls .eq. 0)then ! values at start of trace                
@@ -306,7 +308,7 @@
            idlast = id; jdlast = jd; kdlast = kd
            id = nint(ri); jd = nint(rj); kd = nint(rk)
 
-           if(id .eq. idb .and. jd .eq. jdb)then
+           if(id .ge. idb-idbr .and. id .le. idb+idbr .and. jd .eq. jdb .and. kd .eq. nk-2)then
              idebug = 1
            else
              idebug = 0
@@ -322,12 +324,12 @@
            else                              ! inside domain
              if(transm_3d(id,jd,kd) .ne. r_missing_data)then
                if(id .eq. idlast .and. jd .eq. jdlast .and. kd .eq. kdlast)then
-                 if(idebug .eq. 1)write(6,3)s,ri,rj,rk,ht,id,jd,kd             
-3                format('s/ri/rj/rk/ht = ',5f9.2,' same march',3i5)
+                 if(idebug .eq. 1)write(6,3)ls,s,slast,ri,rj,rk,ht,id,jd,kd             
+3                format('ls/s/sl/ri/rj/rk/ht = ',i6,6f9.2,' same march',3i5)
                else
-                 if(idebug .eq. 1)write(6,4)s,ri,rj,rk,ht,id,jd,kd             
-4                format('s/ri/rj/rk/ht = ',5f9.2,' already assigned',3i5)
-                 goto 9
+                 if(idebug .eq. 1)write(6,4)ls,s,slast,ri,rj,rk,ht,id,jd,kd             
+4                format('ls/s/sl/ri/rj/rk/ht = ',i6,6f9.2,' already assigned',3i5)
+!                goto 9
                endif
              else ! transm_3d is missing
                if(idebug .eq. 1)write(6,5)s,ri,rj,rk,ht,htt,htmarch,curve,id,jd,kd             
@@ -408,6 +410,10 @@
 
                if(l_same_point .eqv. .false.)then
                  b_alpha_cube(:,:,:) = b_alpha_3d(il:ih,jl:jh,kl:kh)
+                 if(idebug .eq. 1)then
+                   write(6,7)il,ih,jl,jh,kl,kh,b_alpha_cube
+7                  format('new cube ',6i5,2x,8f8.5)
+                 endif
                endif
 
                b_alpha_new = sum(tri_coeff(:,:,:)*b_alpha_cube(:,:,:))
@@ -436,8 +442,8 @@
                transm_3d(id,jd,kd) = (1. - albedo) ! * frac_abv_terrain              
 
                if(idebug .eq. 1)then
-                   write(6,8)id,jd,kd,transm_3d(id,jd,kd),b_alpha_new,b_alpha_last
-8                  format('ijk trn ba',3i5,f10.6,2e12.5)
+                   write(6,8)id,jd,kd,transm_3d(id,jd,kd),b_alpha_new,b_alpha_last,il,jl,kl,illast,jllast,kllast
+8                  format('ijkd trn ba ijkl ijkllast',3i5,f10.6,2x,2e12.5,2x,3i5,2x,3i5/)
                endif
 
                if(frac_abv_terrain .lt. 1.0)then ! 1st terrain intersection
@@ -448,6 +454,8 @@
              nfacesteps = nfacesteps + 1
 
            endif
+
+           lslast = ls
 
 9          continue ! pick from from former rays
 !          albedo = transm_3d(id,jd,kd)
@@ -470,6 +478,7 @@
        I4_elapsed = ishow_timer()
 
        write(6,*)' transm_3d column if = ',if,transm_3d(idb,jdb,:)
+       write(6,*)' transm_3d row    if = ',if,transm_3d(idb-idbr:idb+idbr,jdb,nk-2)
 
       enddo ! if
 
