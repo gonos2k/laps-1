@@ -54,7 +54,10 @@
 !
       if (nbits.ne.0) then
          allocate(ctemp(ndpts*4))
-         iret=dec_png(cpack,width,height,ctemp)
+!        iret=dec_png(cpack,width,height,ctemp)
+         write(6,*)
+     1     ' ERROR in pngunpack.F: attempt to use unavailable routines' 
+         stop
          call gbytes(ctemp,ifld,0,nbits,0,ndpts)
          deallocate(ctemp)
          do j=1,ndpts
