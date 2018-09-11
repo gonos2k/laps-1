@@ -17,7 +17,7 @@
         real, allocatable :: disti_a(:,:)
         real, allocatable :: distj_a(:,:)
 
-        radius = 60000.
+        radius = 120000.
         iradius = nint(radius / grid_spacing_m)
 
         write(6,*)' ht/radius/iradius = ',ht,radius,iradius
