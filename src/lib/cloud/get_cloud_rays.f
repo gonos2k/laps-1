@@ -520,13 +520,16 @@
                 write(6,*)' call get_cloud_rad_faces2...'
                 htstart = topo_sfc+htagl  ! MSL
                 horz_dep_d = horz_depf(max(htstart,0.),earth_radius)
+                idb = min(389,ni-10)
+                jdb = min(757,nj-10)
                 call get_cloud_rad_faces2(              
      1            obj_alt,obj_azi,horz_dep_d,        ! I
      1            sol_alt(i,j),sol_azi(i,j),         ! I 
      1            clwc_3d,cice_3d,rain_3d,snow_3d,   ! I
      1            topo_a,grdasp_ll,                  ! I
-     1            ni,nj,nk,i,j,                      ! I
+!    1            ni,nj,nk,i,j,                      ! I
 !    1            ni,nj,nk,ni/2,nj/2,                ! I
+     1            ni,nj,nk,idb,jdb,                  ! I
      1            heights_3d,                        ! I 
      1            sfc_glow,                          ! I
      1            transm_3d,transm_4d)               ! O
