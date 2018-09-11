@@ -70,6 +70,7 @@
         real clear_rad_c_nl(nc,ni,nj) ! night sky spectral radiance from lights
         real clear_rad_c_tot(nc,ni,nj) ! night sky spectral radiance from lights + airglow
         real clear_rad_c_airglow(nc,ni,nj) ! airglow (nL)
+        real airglow_zen_nl_c(nc)   ! airglow spectral radiance at zenith (nL)
         real ave_rad_toa_c(nc,ni,nj)! average (airglow + stars and such)
         real ag_2d(ni,nj)           ! gas airmass (topo/notopo)
         real glow_sun(ni,nj)        ! sunglow (log nl, extendd obj, extnct)
@@ -957,7 +958,8 @@
         if(.true.)then
             call get_airglow(alt_a,ni,nj,nc,obs_glow_gnd,i4time &   ! I
                                   ,patm,htmsl,horz_dep &            ! I
-                                  ,airmass_2_topo,frac_lp &         ! I
+                                  ,airmass_2_topo,frac_lp    &      ! I
+                                  ,airglow_zen_nl_c &               ! O
                                   ,clear_rad_c_airglow)             ! O
             ave_rad_toa_c(:,:,:) = clear_rad_c_airglow(:,:,:)
 
@@ -1264,6 +1266,7 @@
 
               if(htmsl .gt. 100e3 .or. .true.)then
                 rad_sec_cld(:) = difftwi(max(solalt_ref,-16.)) * (ext_g(:)/.09) * day_int / 1300. ! * 7.0
+                rad_sec_cld(:) = rad_sec_cld(:) + airglow_zen_nl_c(:) * 2.
                 glow_secondary_cld = log10(rad_sec_cld(2))
               endif
 
@@ -1773,11 +1776,11 @@
 !                   Enhanced brightness of lights near the horizontal
                     aef = aef_f(-alt_a(i,j))
                     rtopo_red = day_int * (emic(1,i,j) * aef & 
-                              + 2. * gtic(1,i,j) * topo_albedo(1,i,j) )
+                              + 2. * (gtic(1,i,j)+airglow_zen_nl_c(1)/day_int) * topo_albedo(1,i,j) )
                     rtopo_grn = day_int * (emic(2,i,j) * aef &
-                              + 2. * gtic(2,i,j) * topo_albedo(2,i,j) )
+                              + 2. * (gtic(2,i,j)+airglow_zen_nl_c(2)/day_int) * topo_albedo(2,i,j) )
                     rtopo_blu = day_int * (emic(3,i,j) * aef &
-                              + 2. * gtic(3,i,j) * topo_albedo(3,i,j) )
+                              + 2. * (gtic(3,i,j)+airglow_zen_nl_c(3)/day_int) * topo_albedo(3,i,j) )
                   else ! nL (original city lights only)
                     rtopo_red = topo_gti(i,j) * 1.5
                     rtopo_grn = topo_gti(i,j) * 1.0
