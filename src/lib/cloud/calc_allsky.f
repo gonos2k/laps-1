@@ -1178,7 +1178,7 @@
         return
         end
 
-        subroutine diffimg(img1,img2,nc,ni,nj,a_t,b_t
+        subroutine diffimg(img1,img2,nc,ni,nj,a_t,b_t,avecorr
      1                    ,isun,jsun,idb,fname)
 
         use ppm
@@ -1199,10 +1199,13 @@
         do ic = 1,nc
             tmp1(:,:) = img1(ic,:,:)       ! sim
             tmp2(:,:) = img2(ic,:,:)       ! cam
-            imgdiff(ic,:,:) = 128 +        ! WRT scaled images
-     1        nint( tmp2(:,:) - tmp1(:,:) ) 
-!           imgdiff(ic,:,:) = 128 +        ! WRT regression line
-!    1        nint( tmp2(:,:) - (a_t(ic) * tmp1(:,:) + b_t(ic)) )
+            if(avecorr .lt. 0.5)then
+                imgdiff(ic,:,:) = 128 +        ! WRT scaled images
+     1            nint( tmp2(:,:) - tmp1(:,:) ) 
+            else
+                imgdiff(ic,:,:) = 128 +        ! WRT regression line
+     1            nint( tmp2(:,:) - (a_t(ic) * tmp1(:,:) + b_t(ic)) )
+            endif
 !           imgdiff(ic,:,:) = img1(ic,:,:) ! test simulated image
 !           imgdiff(ic,:,:) = img2(ic,:,:) ! test camera image
 
