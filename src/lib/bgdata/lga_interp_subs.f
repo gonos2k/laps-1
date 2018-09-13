@@ -77,7 +77,7 @@ c
       character*4    lvl_coord(nz)
       character*10   units(nz)
       character*125  comment(nz)
-      character*9    fname9
+      character*9    fname9,a9reftime,a9validtime
       character*4    af
 
 !!    add by Huiling Yuan  for getting background information, 20120905, AAA001
@@ -162,20 +162,20 @@ c
 !     add Huiling Yuan, 20120906, AAA003
       if((use_analysis. eqv. .true.) .and. 
      1   (use_forecast .eqv. .false.))then   
-      newfcst=i4time_now-i4time_valid1
-      call make_fnam_lp(time2,fname9,istatus)
-      imin=mod(newfcst,3600)/60
-      ihour=newfcst/3600
-      write(af,'(2i2.2)') ihour,imin
-      print *,'Time interp output file: ',fname9//af,'.'//ext(1:3)
+        newfcst=i4time_now-i4time_valid1
+        call make_fnam_lp(time2,fname9,istatus)
+        imin=mod(newfcst,3600)/60
+        ihour=newfcst/3600
+        write(af,'(2i2.2)') ihour,imin
+        print *,'Time interp output file: ',fname9//af,'.'//ext(1:3)
 
       else
-      newfcst=fcst1-(i4time_valid2-i4time_now)
-      call make_fnam_lp(time1,fname9,istatus)
-      imin=mod(newfcst,3600)/60
-      ihour=newfcst/3600
-      write(af,'(2i2.2)') ihour,imin
-      print *,'Time interp output file: ',fname9//af,'.'//ext(1:3)
+        newfcst=fcst1-(i4time_valid2-i4time_now)
+        call make_fnam_lp(time1,fname9,istatus)
+        imin=mod(newfcst,3600)/60
+        ihour=newfcst/3600
+        write(af,'(2i2.2)') ihour,imin
+        print *,'Time interp output file: ',fname9//af,'.'//ext(1:3)
       endif   ! end if block use_analysis=true, Huiling Yuan, 20120906, AAA003
 
       call s_len(dir,lend)
@@ -200,6 +200,10 @@ c
 c
          if(istatus.ne.1) then
             print *, 'ERROR returned from read_laps, time1'
+            call  make_fnam_lp(time1, a9reftime, nstatus)
+            call  make_fnam_lp(time1+fcst1, a9validtime, nstatus)
+            print *, 'time1/fcst1 = ',time1,fcst1
+            print *, 'reftime/validtime = ',a9reftime,' ',a9validtime
             print *, 'n / ngrids = ',n,ngrids                        
             stop 'time_interp'
          endif
@@ -209,6 +213,7 @@ c
      .        grid2,istatus)
          if(istatus.ne.1) then
             print *, 'ERROR returned from read_laps, time2'
+            print *, 'time2/fcst2 = ',time2,fcst2
             print *, 'n / ngrids = ',n,ngrids                        
             stop 'time_interp'
          endif
