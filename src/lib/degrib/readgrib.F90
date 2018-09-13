@@ -142,8 +142,14 @@ subroutine degrib_nav(gribflnm, vtablefn, nx, ny, nz, &
         dx=map%dx
         dy=abs(map%dx)
 
+        write(6,*)' initial lat/lon from map structure',map%lat1,map%lat2,map%lon1,map%lon2
+
+        if (map%lat1.gt.10000.) map%lat1=map%lat2/1000000
+        if (map%lon1.gt.10000.) map%lon1=map%lon2/1000000
         if (map%lat2.gt.10000.) map%lat2=map%lat2/1000000
         if (map%lon2.gt.10000.) map%lon2=map%lon2/1000000
+
+        write(6,*)' adjusted lat/lon from map structure',map%lat1,map%lat2,map%lon1,map%lon2
 
         ! Cross dateline test. (Needs more thought.)
         cross_dateline=.false.
