@@ -129,6 +129,7 @@
         real cloud_rad_c(nc,minalt:maxalt,minazi:maxazi)
         real cloud_rad_w(minalt:maxalt,minazi:maxazi)
         real cloud_sfc_c(nc,minalt:maxalt,minazi:maxazi)  
+        real cloud_rad_c_nt(nc,minalt:maxalt,minazi:maxazi)
         real clear_rad_c(nc,minalt:maxalt,minazi:maxazi)
         real clear_radf_c(nc,minalt:maxalt,minazi:maxazi)
         real clear_rad_c_nt(nc,minalt:maxalt,minazi:maxazi)
@@ -241,6 +242,7 @@
      1                     ,r_cloud_3d,cloud_od,cloud_od_sp         ! O
      1                     ,cloud_od_sp_w                           ! O
      1                     ,r_cloud_rad,cloud_rad_c,cloud_rad_w     ! O
+     1                     ,cloud_rad_c_nt                          ! O
      1                     ,clear_rad_c,clear_radf_c,patm           ! O
      1                     ,clear_rad_c_nt                          ! O
      1                     ,airmass_2_cloud_3d,airmass_2_topo_3d    ! O
@@ -550,6 +552,7 @@
      1                    ,cloud_od_sp_w     ! front weighted species
      1                    ,r_cloud_rad       ! cloud solar transmittance
      1                    ,cloud_rad_c       ! cloud solar transmittance / color
+     1                    ,cloud_rad_c_nt    ! cloud night color
      1                    ,cloud_rad_w       ! cloud solar transmittance * rad
      1                    ,cloud_sfc_c       ! cld rad from sfc lighting (sru)
      1                    ,clear_rad_c       ! clear sky illumination by sun     
