@@ -688,7 +688,7 @@ foreach $exe (@LAPS_EXE){
                 print $t." Running $exe in background, waitdone is $waitdone\n";
                 my $sys="($LAPSROOT/bin/$exe 1> $LAPS_LOG_PATH/$log 2>&1; touch $LAPS_LOG_PATH/$done; echo `date -u` $exe finished in background)&";
                 &forksub($sys,$lockfile);
-                system("ls -l --full-time $LAPS_LOG_PATH/$waitdone"); # for testing
+                system("ls -l $LAPS_LOG_PATH/$waitdone"); # for testing
             }elsif($exe eq $lga_proc){
                 print $t." Waiting for $waitdone to appear before running $exe\n";
                 my $iwait = &laps_tools::wait_for_file("$LAPS_LOG_PATH/$waitdone",5,1200);
@@ -700,7 +700,7 @@ foreach $exe (@LAPS_EXE){
                 print $t." Running $exe\n";
                 my $sys="$LAPSROOT/bin/$exe 1> $LAPS_LOG_PATH/$log 2>&1";
                 &forksub($sys,$lockfile);
-                system("ls -l --full-time $LAPS_LOG_PATH/$waitdone"); # for testing
+                system("ls -l $LAPS_LOG_PATH/$waitdone"); # for testing
             }
 
             if(-e "$LAPSROOT/etc/$wgi_script_name\.pl"){
