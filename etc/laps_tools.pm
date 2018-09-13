@@ -1077,9 +1077,13 @@ sub systime{
         $ctime = $archive_time;
     }else{
 #       print "Setting ctime based on clock time and delay of $delay in hours...\n";
+        my $nowtime = time;
+#        print "time = $nowtime\n";
         $ctime = time - $delay*3600;
     }
 
+#   print "delay = $delay\n";
+#   print "cycle_time = $cycle_time\n";
 #   print "ctime = $ctime\n";
 
     my @MON = qw(JAN FEB MAR APR MAY JUN JUL AUG SEP OCT NOV DEC);
@@ -1090,6 +1094,11 @@ sub systime{
        $year=substr($year,2,2);
        $mon=$mon-1;
     }else{
+       my $ncycles = int(($ctime+3.0)/$cycle_time);
+#      print "ncycles = $ncycles\n";
+       my $roundtime = $ncycles * $cycle_time;
+#      print "roundtime = $roundtime\n";
+       $ctime = $roundtime;
        ($sec,$min,$hour,$mday,$mon,$year) = gmtime($ctime);
         $yyyy = 1900+$year;
         $year= $year-100 if($year>99);
@@ -1099,18 +1108,19 @@ sub systime{
 #
 # This resets to the top of the cycle (for cycles <= 1 hour)
 # ----------------------------------------------------------
-    if($archive_time==0){
+    if($archive_time==99999){ # turned off
        my $minute=$min;
        my $i=0;
        while($i<60){
        my $mod = $i%int($cycle_time/60);
         $min = $i if($i<$minute && $mod==0);
         $i++;
-        #     print "$i $mod\n";
+#       print "$i $mod $hour $minute $min\n";
        }
     }
 
-    $ctime = timegm(0,$min,$hour,$mday,$mon,$yyyy-1900);
+#   $ctime = timegm(0,$min,$hour,$mday,$mon,$yyyy-1900);
+#   print "hour/min = $hour $min\n";
 
     my $ftime = $ctime +  315619200;
     $min = '0'.$min if(length($min)<2);
