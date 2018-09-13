@@ -736,6 +736,7 @@ c     enddo
          do n=1,np
             diff=glon(n)-lon0
             if (diff .lt. -180.) diff=diff+360.
+!           write(6,*)glon(n),lon0,diff
             lli(n)=diff/dlon+1.
             llj(n)=(lat0-glat(n))/dlat+1.
          enddo
