@@ -2,7 +2,8 @@
 
         subroutine get_sky_rgb(r_cloud_3d,cloud_od,cloud_od_sp,nsp, &   ! I
                    cloud_od_sp_w,                                   &   ! I
-                   r_cloud_rad,cloud_rad_c,cloud_rad_w,cloud_sfc_c, &   ! I
+                   r_cloud_rad,cloud_rad_c,cloud_rad_c_nt,cloud_rad_w,& ! I
+                   cloud_sfc_c,                                     &   ! I
                    clear_rad_c,l_solar_eclipse,i4time,rlat,rlon,eobsl,& ! I
                    clear_radf_c,patm,patm_sfc,htmsl, &                  ! I
                    clear_rad_c_nl, &                                    ! I
@@ -58,6 +59,7 @@
         real cloud_sfc_c(nc,ni,nj)  ! cloud radiance from surface lighting (sun relative units)
         real clear_rad_c(nc,ni,nj)  ! clear sky illumination
                                     ! local/input when sun is above/below twi_0
+        real cloud_rad_c_nt(nc,ni,nj)  ! cloud night illumination
         real clear_rad_2nd_c(nc,ni,nj) ! secondary scattering clear sky illumination
         real moon_rad_c(nc,ni,nj)   ! clear sky illumination from moon
         real moon_rad_2nd_c(nc,ni,nj) ! secondary scattering clear sky illumination
@@ -67,7 +69,7 @@
                                     ! though possibly not topo?
                                     ! attenuated behind clouds
 !       real clear_radf_c_eff(nc,ni,nj) ! accounts for airmass_2_topo         
-        real clear_rad_c_nl(nc,ni,nj) ! night sky spectral radiance from lights
+        real clear_rad_c_nl(nc,ni,nj) ! night sky spectral radiance from lights (sprad converted to nL)
         real clear_rad_c_tot(nc,ni,nj) ! night sky spectral radiance from lights + airglow
         real clear_rad_c_airglow(nc,ni,nj) ! airglow (nL)
         real airglow_zen_nl_c(nc)   ! airglow spectral radiance at zenith (nL)
