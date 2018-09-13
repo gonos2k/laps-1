@@ -17,6 +17,7 @@
      1                           ,r_cloud_3d,cloud_od,cloud_od_sp       ! O
      1                           ,cloud_od_sp_w                         ! O
      1                           ,r_cloud_rad,cloud_rad_c,cloud_rad_w   ! O
+     1                           ,cloud_rad_c_nt                        ! O
      1                           ,clear_rad_c,clear_radf_c,patm         ! O
      1                           ,clear_rad_c_nt                        ! O
      1                           ,airmass_2_cloud_3d,airmass_2_topo_3d  ! O
@@ -184,6 +185,7 @@
         real r_cloud_rad(minalt:maxalt,minazi:maxazi)    ! sun to cloud transmissivity (direct+fwd scat)
         real cloud_rad_c(nc,minalt:maxalt,minazi:maxazi) ! sun to cloud transmissivity (direct+fwd scat) * solar color/int
         real cloud_rad_w(minalt:maxalt,minazi:maxazi)    ! sun to cloud transmissivity (direct+fwd scat) * trans
+        real cloud_rad_c_nt(nc,minalt:maxalt,minazi:maxazi)
         real clear_rad_c(nc,minalt:maxalt,minazi:maxazi) ! clear sky illumination (twilight)
         real clear_radf_c(nc,minalt:maxalt,minazi:maxazi)! integrated 
                ! fraction of gas illuminated by the sun along line of sight
@@ -210,6 +212,7 @@
         real aod_ill_dir(minalt:maxalt,minazi:maxazi) ! slant path, atten behind clouds
         real aod_tot(minalt:maxalt,minazi:maxazi)     ! slant path
         real sum_odrad_c(nc)
+        real sum_odrad_c_nt(nc)
         real sum_odrad_c_last(nc)
         real minalt_deg,maxalt_deg,minazi_deg,maxazi_deg
 
@@ -1311,6 +1314,7 @@
           sum_odrad = 0.
           sum_odrad_c = 0.
           sum_odrad_w = 0.
+          sum_odrad_c_nt = 0.
           sum_clrrad = 0.     ! used for clear_radf_c
           sum_clrrad_pot = 0. ! used for clear_radf_c
           sum_aod = 0.
@@ -2092,6 +2096,9 @@
 
                     sum_odrad_c(:) = sum_odrad_c(:) + 
      1              (cvr_path * slant2 * transm_4d_m(:))
+
+                    sum_odrad_c_nt(:) = sum_odrad_c_nt(:) + 
+     1              (cvr_path * slant2 * uprad_4d_m(:))
                   endif ! idebug .eq. 1 .OR. cond_m .gt. 0.
 
 !                 Assess topo height with respect to ray
@@ -2358,6 +2365,9 @@
                       ycos_last = upyrad_3d_m
 
                       cvr_path_sum_sp_w(:) = cvr_path_sum_sp(:)
+
+                      cloud_rad_c_nt(:,ialt,jazi) 
+     1                                = sum_odrad_c_nt(:) / cvr_path_sum 
 
                     elseif(cvr_path_sum      .gt.  bks_thr .AND.
      1                     cvr_path_sum_last .le.  bks_thr .AND.
@@ -2819,6 +2829,9 @@
               cloud_rad_c(:,ialt,jazi) = 
      1         fm * cloud_rad_c(:,ialt,jazim)  
      1                                 + fp *cloud_rad_c(:,ialt,jazip)
+              cloud_rad_c_nt(:,ialt,jazi) = 
+     1                               fm * cloud_rad_c_nt(:,ialt,jazim)  
+     1                             + fp *cloud_rad_c_nt(:,ialt,jazip)      
               cloud_rad_w(ialt,jazi) = 
      1         fm * cloud_rad_w(ialt,jazim)+fp * cloud_rad_w(ialt,jazip)      
 
@@ -3005,6 +3018,9 @@
      1       fm * r_cloud_rad(ialtm,:)  + fp * r_cloud_rad(ialtp,:)
             cloud_rad_c(:,ialt,:) =
      1       fm * cloud_rad_c(:,ialtm,:) + fp * cloud_rad_c(:,ialtp,:)
+            cloud_rad_c_nt(:,ialt,:) =
+     1                                fm * cloud_rad_c_nt(:,ialtm,:)
+     1                              + fp * cloud_rad_c_nt(:,ialtp,:)
             cloud_rad_w(ialt,:) =
      1       fm * cloud_rad_w(ialtm,:)  + fp * cloud_rad_w(ialtp,:)
             clear_rad_c(:,ialt,:) =
@@ -3103,6 +3119,10 @@
 
         write(6,*)' Range of cloud_rad_c B =',minval(cloud_rad_c(3,:,:))
      1                                       ,maxval(cloud_rad_c(3,:,:))
+
+        write(6,*)' Range of cloud_rad_c_nt 2 (wm2srnm) ='
+     1                                    ,minval(cloud_rad_c_nt(2,:,:))
+     1                                    ,maxval(cloud_rad_c_nt(2,:,:))
 
         write(6,*)' Range of clear_rad_c 3 =',minval(clear_rad_c(3,:,:))
      1                                       ,maxval(clear_rad_c(3,:,:))
