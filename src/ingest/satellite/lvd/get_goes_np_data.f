@@ -227,8 +227,13 @@ C
       if(.true.)then
           if(.false.)then
             cvarname = 'image'
-          else
+          elseif(csat_type .eq. 'gnp')then
             cvarname = 'Sectorized_CMI'
+          elseif(csat_type .eq. 'gr2')then
+            cvarname = 'CMI'
+          else
+            write(6,*)' Error in read_goes_np_data for type ',csat_type
+            istatus = 0
           endif
           nf_status=NF_INQ_VARID(nf_fid,trim(cvarname),nf_vid)
           if(nf_status.ne.NF_NOERR) then
