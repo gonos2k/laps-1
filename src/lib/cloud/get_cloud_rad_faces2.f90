@@ -61,6 +61,7 @@
 
      real heights_1d(nk)
 
+     real sprad_to_nl(nc)
      real trans_c(nc)
      real bi_coeff(2,2),tri_coeff(2,2,2),b_alpha_cube(2,2,2)
      equivalence (s,scurr) ! needed only during transition from s to scurr
@@ -98,6 +99,12 @@
      enddo ! k
 
      transm_4d = 0.
+
+     do ic = 1,nc
+       call nl_to_sprad(1.,1,wa(ic),sprad)
+       sprad_to_nl(ic) = 1. / sprad
+     enddo ! ic
+
      idbr = 6
 
      write(6,*)' transm_3d column 1 = ',transm_3d(idb,jdb,:)
@@ -673,7 +680,7 @@
        enddo ! k
      else ! nighttime: use red channel for sfc lighting
        do k = 1,nk       
-         transm_4d(:,:,k,1) = sfc_glow(:,:) * 0.3 ! nominal backsct
+         transm_4d(:,:,k,1) = (uprad_4d(:,:,k,2) / (2.*pi)) * sprad_to_nl(2)
        enddo ! k
        transm_3d(:,:,:) = 0.
      endif
