@@ -708,6 +708,41 @@ c March 2003 added HKO (gms) sat ingest
          c_type(2,1) = '4u'
          c_type(3,1) = 'vis'
 
+      elseif(csattype.eq.'gr2')then
+         do i4time_offset = -120,+120,60
+           call get_goes_l2_data
+     +                   (i4time_cur,laps_cycle_time,NX_L,NY_L
+     +                   ,i4time_offset
+     +                   ,maxchannel,max_files,nchannels
+     +                   ,csatid,csattype,chtype
+     +                   ,path_to_raw_sat(1,jtype,ksat)
+     +                   ,image_ir,n_ir_elem,n_ir_lines
+     +                   ,image_39
+     +                   ,image_vis,n_vis_elem,n_vis_lines
+     +                   ,i4time_goes,istatus)                      ! O
+           if(istatus .eq. 1)then
+              write(6,*)' Sucessful return from get_goes_np_data'
+              goto 120
+           endif
+         enddo
+
+120      nft = istatus
+         ntm = 3
+         i4time_data(1) = i4time_goes
+
+         where(image_ir(:,:,:) .eq. 0.)
+     &         image_ir(:,:,:) = r_missing_data      
+
+         where(image_39(:,:,:) .eq. 0.)
+     &         image_39(:,:,:) = r_missing_data      
+
+         where(image_vis(:,:,:) .eq. 0.)
+     &         image_vis(:,:,:) = r_missing_data      
+
+         c_type(1,1) = 'ir'
+         c_type(2,1) = '4u'
+         c_type(3,1) = 'vis'
+
       else
          write(6,*)' ERROR: unknown sat type ',csattype
          lvd_status = 0
@@ -932,6 +967,7 @@ c ------------------------------------------------------------
      &    csattype.ne.'jma'.and.
      &    csattype.ne.'cms'.and.
      &    csattype.ne.'gnp'.and.
+     &    csattype.ne.'gr2'.and.
      &    csattype.ne.'ncp')then
           write(6,*)
           write(6,*)'Convert counts to brightness temps ',csattype
