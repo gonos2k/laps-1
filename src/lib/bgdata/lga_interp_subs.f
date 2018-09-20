@@ -56,7 +56,7 @@ c
      .          newfcst,
      .          imin,ihour,
      .          i,j,k,kk,
-     .          istatus,nstatus,ishow_timer
+     .          istatus,nstatus,ishow_timer,i4_elapsed
 
       logical   lexist
 c
@@ -256,7 +256,8 @@ c
  
 c
 !        istatus = ishow_timer()
-         comment(1) = 'Time Interpolated: '//comment(1)
+         i4_elapsed =ishow_timer()
+         comment(1) = 'Writing Interpolated Time: '//comment(1)
          if(ext.eq.'lga')then
 !YHL 20120906            call write_laps(time1,time1+newfcst,dir,ext,
             call write_laps(i4reftime,i4valtime,dir,ext,
