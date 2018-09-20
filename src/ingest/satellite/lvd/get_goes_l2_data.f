@@ -21,7 +21,7 @@
 
       Character*6  csat_id
       Character*3  csat_type
-      Character*3  chtype(maxchannel)
+      Character*3  chtype(maxchannel),chtype_local
       Character*9  a9time
       Character*13 cfname13,cvt_i4time_wfo_fname13
 
@@ -73,8 +73,9 @@ C
         print *,'dim nlines'
       endif
 
+      chtype_local = '11u'
       call read_goes_np_data(nf_fid,n_ir_elem,n_ir_lines,
-     +     csat_id,csat_type,chtype(3),
+     +     csat_id,csat_type,chtype_local,
      +     ilaps_cycle_time, NX_L, NY_L, i4time_earliest,
      +     i4time_latest, lun_out, image_13, istatus)
 
@@ -125,8 +126,9 @@ C
         print *,'dim nlines'
       endif
 
+      chtype_local = '39u'
       call read_goes_np_data(nf_fid,n_ir_elem,n_ir_lines,
-     +     csat_id,csat_type,chtype(2),
+     +     csat_id,csat_type,chtype_local,
      +     ilaps_cycle_time, NX_L, NY_L, i4time_earliest,
      +     i4time_latest, lun_out, image_07, istatus)
 
@@ -175,8 +177,9 @@ C
         print *,'dim nlines'
       endif
 
+      chtype_local = 'vis'
       call read_goes_np_data(nf_fid,n_vis_elem,n_vis_lines,
-     +     csat_id,csat_type,chtype(1),
+     +     csat_id,csat_type,chtype_local,
      +     ilaps_cycle_time, NX_L, NY_L, i4time_earliest,
      +     i4time_latest, lun_out, image_02, istatus)
 
