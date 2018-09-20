@@ -216,6 +216,7 @@ c
 
         istatus = 0
         ibadflag = int(badflag)
+        n_obs_b = 0 ! initialize
 c
 c.....  Figure out the i4time and call the read routine.
 c
