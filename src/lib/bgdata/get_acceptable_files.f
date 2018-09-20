@@ -28,7 +28,7 @@
       integer i4time_fa
       integer sbnvaltimes
       logical use_analysis, use_forecast, l_parse
-      character*9   fname,wfo_fname13_to_fname9,fname9
+      character*9   fname,wfo_fname13_to_fname9,fname9,a9i,a9a,a9f
       integer itimes(max_files)
       integer i4time_anal
       integer bgtime_init
@@ -355,10 +355,12 @@ cwni      do n=1,bg_files-1
       do n=1,bg_files
 C -- WNI-BLS ... Reworked this whole section
          if (n .EQ. 1) then
-            bkgd(ibkgd)=bg_names(n)(1:9)
-            ifcst_bkgd(ibkgd)=1
-            call i4time_fname_lp(bkgd(ibkgd),i4timeinit(ibkgd),istatus)
-            print *, "First: ",ibkgd, ifcst_bkgd(ibkgd)
+           bkgd(ibkgd)=bg_names(n)(1:9)
+           ifcst_bkgd(ibkgd)=1
+           call i4time_fname_lp(bkgd(ibkgd),i4timeinit(ibkgd),istatus)
+           if(istatus .ne. 1)write(6,*)'WARNING - malformed time:'
+     +                      ,bkgd(ibkgd),i4timeinit(ibkgd)
+           print *, "First: ",ibkgd, ifcst_bkgd(ibkgd)
          else
            finit1=bg_names(n-1)(1:9)
            finit2=bg_names(n)(1:9)
@@ -371,6 +373,8 @@ C            Start a new init time
              bkgd(ibkgd)=bg_names(n)(1:9)
              ifcst_bkgd(ibkgd)=1 
              call i4time_fname_lp(bkgd(ibkgd),i4timeinit(ibkgd),istatus)
+             if(istatus .ne. 1)write(6,*)'WARNING - malformed time:'
+     +                        ,bkgd(ibkgd),i4timeinit(ibkgd)
            endif
 
          endif
@@ -405,7 +409,19 @@ c ------------------------------------------------------------------------------
       indx_for_best_init2=0
       indx_for_best_fcst=0
       i4time_min_diff=1000000
+
       do while(n.le.ibkgd)
+
+         if(idebug .ge. 1 .or. .true.)then
+            call make_fnam_lp(i4timeinit(n),a9i,istatus)
+            call make_fnam_lp(i4time_anal,a9a,istatus)
+            call make_fnam_lp(i4timeinit(n)+forecast_length*3600,a9f
+     +                       ,istatus)
+!           write(6,*)' i4times: '
+!    +     ,i4timeinit(n),i4time_anal,i4timeinit(n)+forecast_length*3600  
+            write(6,*)' a9times: ',a9i,' ',a9a,' ',a9f
+         endif
+
          if(i4timeinit(n).le.i4time_anal .and.
      +i4timeinit(n)+forecast_length*3600 .gt. i4time_anal)then   !let "forecast_length" window on init time qualify
 
@@ -454,9 +470,18 @@ c    +       (cmodel.eq.'LAPS') )then ! all cmodel types with bgmodel = 0 need t
 
             elseif(cmodel.ne.'LAPS')then
 
+             if(idebug.ge.1)then
+               write(6,*)'cmodel .ne. LAPS block'
+             endif
+
 !!! add Huiling Yuan 20120904  AAA001, tested with RUC, use_analysis=true
              if ((use_analysis .eqv. .true.) .AND. 
      1           (use_forecast .eqv. .false.)      )then
+
+              if(idebug.ge.1)then
+                write(6,*)'use_analysis = T AND use_forecast = F block'
+              endif
+
               jj=1
 
               if(n.lt.ibkgd)then
@@ -493,7 +518,9 @@ c    +       (cmodel.eq.'LAPS') )then ! all cmodel types with bgmodel = 0 need t
 !!!  partial if block, use_analysis=true,  by Huiling Yuan,  AAA001_A
              else   !! add by Huiling Yuan, AAA001_B
 
-!             use_analysis = .false. .OR. use_forecast = .true.
+              if(idebug.ge.1)then
+                write(6,*)'use_analysis = F OR use_forecast = T block'
+              endif
 
               do jj=2,ifcst_bkgd(n)
                 af=fcst(n,jj-1)
@@ -528,7 +555,7 @@ c    +       (cmodel.eq.'LAPS') )then ! all cmodel types with bgmodel = 0 need t
                 endif
               enddo
 
-             endif   !use_analysis.eqv..true., end Huiling Yuan,  AAA001
+             endif ! use_analysis.eqv..true., end Huiling Yuan,  AAA001
 
             else  !must be LAPS
 
