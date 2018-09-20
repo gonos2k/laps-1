@@ -1748,8 +1748,8 @@
                               ,sky_rad(2) + grn_rad &
                               ,sky_rad(3) + blu_rad
 98                  format( &
-                        ' rtopo/gti/gtic/alb/pf/tsalt/tdst/trad/crad/srad   ', &
-                    f7.3,f9.1,f9.4,1x,f8.3,f7.2,f9.2,f12.0,2f8.5,3(2x,3f13.0))
+                       ' rtopo/gti/gtic/alb/pf/tsalt/tdst/od/vis/trad/crad/srad ', &
+                       f7.3,f9.1,f9.4,1x,f8.3,f7.2,f9.2,f12.0,2f8.5,3(2x,3f13.0))
                   endif
 
                   sky_rad(1) = sky_rad(1) + red_rad
