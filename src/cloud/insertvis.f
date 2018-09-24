@@ -181,7 +181,7 @@ cdis
      1                  ,7f9.3)
               endif
 
-              cloud_albedo(i,j) = albedo_eff
+!             cloud_albedo(i,j) = albedo_eff
 
           else                                              ! 3.9u (Nighttime)
               n_missing_albedo =  n_missing_albedo + 1
@@ -510,9 +510,22 @@ cdis
 
           endif ! if upper bound value is missing
 
+          if(cloud_frac_vis_a(i,j) .ne. r_missing_data .and.
+     1       mode_prlx .eq. 3                                )then
+            cloud_albedo(itn:itx,jtn:jtx) = cloud_frac_vis_a(i,j)
+          else
+            cloud_albedo(itn:itx,jtn:jtx) = r_missing_data
+          endif
+
+          if(it .eq. idb .and. jt .eq. jdb)then
+            write(6,*)'CTR it,jt,cla',it,jt,cloud_albedo(it,jt)
+          endif
+
         enddo ! i
         enddo ! j
 
+        write(6,*)'CTR cloud albedo',cloud_albedo(idb,jdb)
+        
         clouds_3d(:,:,:) = clouds_3d_buf(:,:,:)
 
         pct_use_vis = (1.0 - float(n_missing_albedo)/float(ni*nj))*100.       
