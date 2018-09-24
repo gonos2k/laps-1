@@ -267,7 +267,11 @@ C
              write(6,*)' Successfully read image offset ',offset_img
           endif
 
+          write(6,*)' range before scaling',minval(image),maxval(image)
+
           image(:,:) = image(:,:) * scale_img + offset_img
+
+          write(6,*)' range after scaling',minval(image),maxval(image)
 
       endif
 C
