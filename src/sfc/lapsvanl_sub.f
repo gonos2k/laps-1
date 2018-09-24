@@ -738,6 +738,7 @@ c
 	print *,
      &  '    No observations available. Setting analysis to background.'
 	call move(tb, t, imax, jmax)
+        write(6,*)'    bkgnd analysis range is ',minval(t),maxval(t)
 	return
 c
 	end
