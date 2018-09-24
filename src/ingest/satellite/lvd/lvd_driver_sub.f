@@ -721,8 +721,11 @@ c March 2003 added HKO (gms) sat ingest
      +                   ,image_vis,n_vis_elem,n_vis_lines
      +                   ,i4time_goes,istatus)                      ! O
            if(istatus .eq. 1)then
-              write(6,*)' Sucessful return from get_goes_np_data'
+              write(6,*)' Sucessful return from get_goes_l2_data'
               goto 120
+           else
+              write(6,*)' No data from get_goes_l2_data for this time'
+              write(6,*)
            endif
          enddo
 
