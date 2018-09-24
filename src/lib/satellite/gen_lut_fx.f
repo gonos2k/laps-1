@@ -113,11 +113,9 @@ c
 c
 c retrieve the latest nav info from a file if it exists
 c
+      print*,'setting fixed grid navigation information ',cdtype,indx
 
-      if(.true.)then ! GOES16 fixed grid data, sector PAB
-
-         print*,'setting fixed grid navigation information',indx
-
+      if(cdtype .ne. 'gr2')then ! GOES16 fixed grid data, sector PAB
          if(indx.eq.1)then ! vis
             nxfx = 2048
             nyfx = 2048
@@ -139,6 +137,33 @@ c
             ymin = 0.
             offset_x = -101353. * 1d-6 ! radians
             offset_y = +128323. * 1d-6 ! radians
+            dx = 56. * 1d-6        ! radians
+            dy = 56. * 1d-6        ! radians
+            sub_lon_degrees = -75.0
+         endif
+
+      else ! Level 2 'gr2' type
+         if(indx.eq.1)then ! vis
+            nxfx = 6000
+            nyfx = 10000
+!           rlatc=(55. + (-5.)) / 2.
+!           rlonc=(68. + 148. ) / 2.
+            xmin = 0. ! float(nxfx)
+            ymin = 0.
+            offset_x = -0.101353 ! radians
+            offset_y = +0.128233 ! radians
+            dx = 14. * 1d-6        ! radians
+            dy = 14. * 1d-6        ! radians
+            sub_lon_degrees = -75.0
+         else              ! IR
+            nxfx = 1500
+            nyfx = 2500
+!           rlatc=(55. + (-5.)) / 2.
+!           rlonc=(68. + 148. ) / 2.
+            xmin = 0. ! float(nxfx)
+            ymin = 0.
+            offset_x = -0.101332 ! radians
+            offset_y = +0.128212 ! radians
             dx = 56. * 1d-6        ! radians
             dy = 56. * 1d-6        ! radians
             sub_lon_degrees = -75.0
@@ -262,7 +287,7 @@ c
       table_path = cname(1:n1)//'-'//cdtype//'.lut'
 
       n1=index(table_path,' ')
-      write(6,*)'Write lat/lon to i/j look up table'
+      write(6,*)'Not writing lat/lon to i/j look up table'
       write(6,*)table_path(1:n1)
 
 c     call write_table (table_path,nx_l,ny_l,xlat,xlon,
