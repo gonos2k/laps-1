@@ -41,7 +41,7 @@ C
       if(nf_status.ne.NF_NOERR) then
         print *, NF_STRERROR(nf_status),filename
         istatus=0
-!       return
+        return
       endif
 C
 C  Fill all dimension values
