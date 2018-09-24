@@ -264,9 +264,9 @@ cdis
         integer istat_vis_potl_a(NX_L,NY_L)
         integer istat_vis_added_a(NX_L,NY_L)
 
-        real cloud_albedo(NX_L,NY_L)      ! Cloud albedo
-        real cloud_od(NX_L,NY_L)          ! Cloud optical depth
-        real cloud_op(NX_L,NY_L)          ! Cloud opacity
+        real cloud_albedo(NX_L,NY_L)    ! Cloud albedo (corrected parallax)
+        real cloud_od(NX_L,NY_L)        ! Cloud optical depth
+        real cloud_op(NX_L,NY_L)        ! Cloud opacity
 
         real temp_3d(NX_L,NY_L,NZ_L)
 
@@ -1233,7 +1233,9 @@ C       INSERT VISIBLE / 3.9u SATELLITE IN CLEARING STEP
 
 !           This routine will set 'cloud_albedo' from 'cloud_frac_vis_a'
 !           'sat_albedo isn't yet used but could be used for 'mode_refl=1'
-!           once it is refined with 'sfc_albedo' adjustment
+!           once it is refined with 'sfc_albedo' adjustment. 'cloud_albedo' 
+!           is now parallax corrected.
+           
 
             call insert_vis(i4time,clouds_3d,cld_hts
      1        ,topo,cloud_frac_vis_a,sat_albedo,mode_refl,ihist_alb   ! I
@@ -1675,7 +1677,6 @@ C       EW SLICES
             comment_a(7) = 'Cloud Albedo'  ! CLA
             comment_a(8) = 'LAPS Radar Quality'
             comment_a(9) = 'Downward Solar Radiation'
-
 
             call move(cvr_max       ,out_array_3d(1,1,1),NX_L,NY_L)
             call move(cvr_snow_cycle,out_array_3d(1,1,2),NX_L,NY_L)
