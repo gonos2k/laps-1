@@ -1502,8 +1502,8 @@
           glow_tot = log10(clear_rad_c(2,i,j))         ! log nL           
 
           if(idebug .eq. 1)then
-              write(6,91)i,j,idebug,elong_a(i,j),glow_air,glow_nt,glow_moon_s,glow_stars(2,i,j),glow_tot,clear_rad_c(:,i,j)
-91            format('   glow: elg/air/nt/moon/stars/tot/rad = ',3i5,f7.1,5f9.3,3f11.0)
+              write(6,91)i,j,idebug,elong_a(i,j),glow_air,glow_nt,glow_moon_s,glow_stars(2,i,j),glow_tot,clear_rad_c(:,i,j),cloud_rad_c_nt(2,i,j)
+91            format('   glow: elg/air/nt/moon/stars/tot/rad/cldrdcnt = ',3i5,f7.1,5f9.3,3f11.0,f12.0)
           endif
 
           do ic = 1,nc 
@@ -1800,12 +1800,13 @@
                               ,emic(2,i,j),aef &
                               ,topo_albedo(2,i,j),topo_solalt(i,j) &
                               ,dist_2_topo(i,j) &
+                              ,od2topo_c(2),topovis_c(2) &
 !                             ,nint(sky_rgb(:,i,j)),red_rad,grn_rad,blu_rad
                               ,red_rad,grn_rad,blu_rad,sky_rad(:)
 !                   write(6,*)' emic/gtic ',emic(:,i,j),gtic(:,i,j)
 99                  format( &
-                        ' rtopo/gti/gtic/em/aef/alb/tsalt/dst/trad/srad', &
-                           f9.0,f9.4,2f10.7,2f9.3,f9.2,f10.0,2x,3f12.0,2x,3f14.0)
+                        ' rtopo/gti/gtic/em/aef/alb/tsalt/tdst/od/vis/trad/srad', &
+                           f9.0,f9.4,2f10.7,2f9.3,f9.2,f10.0,2f8.5,2x,3f12.0,2x,3f14.0)
                   endif
 
                   sky_rad(1) = sky_rad(1)*(1.0-topo_viseff) + red_rad
