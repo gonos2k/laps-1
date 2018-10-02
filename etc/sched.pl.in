@@ -294,6 +294,17 @@ if(defined $opt_s){ # "surface only"
                   qbalpe.exe lapsprep.exe laps2grib.exe);
     $lga_proc = "obs_convert.exe";
 
+}elsif( ($opt_V eq "cloud")) { # 3D analysis highlighting cloud
+    @LAPS_EXE = qw(lga.exe 
+                  obs_driver.x 
+                  ingest_pro.exe ingest_sounding.exe 
+                  ingest_cloud_drift.exe ingest_aircraft.exe 
+                  ingest_lrs.exe lvd_sat_ingest.exe 
+                  laps_sfc.x temp.exe 
+                  mosaic_radar.x runLDA.NOAA.sh cloud.exe lq3driver.x deriv.exe accum.exe  
+		  lsm5.exe);
+    $lga_proc = "ingest_lrs.exe"; 
+
 }elsif( ($opt_V eq "statistics")) { # Build bkg err statistics by YF 5/13/2015
     @LAPS_EXE = qw(lga.exe);
 
