@@ -303,7 +303,7 @@ if(defined $opt_s){ # "surface only"
                   laps_sfc.x temp.exe 
                   mosaic_radar.x runLDA.NOAA.sh cloud.exe lq3driver.x deriv.exe accum.exe  
 		  lsm5.exe);
-    $lga_proc = "ingest_lrs.exe"; 
+    $lga_proc = "laps_sfc.x"; 
 
 }elsif( ($opt_V eq "statistics")) { # Build bkg err statistics by YF 5/13/2015
     @LAPS_EXE = qw(lga.exe);
