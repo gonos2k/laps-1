@@ -57,7 +57,7 @@ for $radar ("01".."09") {
 #
 
 my(@lapsDirs) = (lga, lgb, 
-                 "lvd/goes10", "lvd/goes11", "lvd/goes12", "lvd/gmssat", ctp, 
+                 "lvd/goes15", "lvd/goes16", "lvd/goes17", "lvd/him8", ctp, 
                  @rdrraw, @rdrvrc, vrc, 
                  pro, lso, lsq, snd, cdw, pin,
                  @vxx, @dxx,
@@ -65,7 +65,7 @@ my(@lapsDirs) = (lga, lgb,
                  lrs, lsx, tmg, lt1, pbl,
                  vrz, lc3, lps, lcb, lcv,  
                  "lsr/goes08", "lsr/goes10", lh3, lh4, lq3,
-                 lcp, lwc, lil, lct, lmd, lmt, lco, lrp, lty, lst, 
+                 lcp, lwc, lil, lct, lmd, lmt, lco, lrp, cty, pty, lst, 
                  lmr, liw, lhe, lfr,
                  l1s, lm1, lm2,
                  "balance/lt1", "balance/lw3", "balance/lh3", "balance/lq3", "balance/lsx",
@@ -88,10 +88,10 @@ print  "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 //EN\">\n";
 print  "<html>\n";
 print  "<head>\n";
 print  "<META HTTP-EQUIV=\"REFRESH\" CONTENT=3600>\n";
-print  "<title>AWIPS/LAPS Product Monitor</title>\n";
+print  "<title>LAPS Product Monitor</title>\n";
 print  "</head>\n";
 print  "<body>\n";
-print  "<center><h1> AWIPS/LAPS Product Monitor </h1></center>\n";
+print  "<center><h1> LAPS Product Monitor </h1></center>\n";
 #print  "<IMG SRC=\"./glite.gif\" VSPACE=2 HSPACE=6 Height=26 Width=40 ALIGN=LEFT >";
 #print  "indicates that product is up to date and consistantly filled <br><br><br> <br>\n";
 #print  "<IMG SRC=\"./ylite.gif\" VSPACE=2 HSPACE=6 Height=26 Width=40 ALIGN=LEFT >" ;
