@@ -112,6 +112,8 @@ cdis
         character*125 comment_2d
         character*3 var_2d
 
+        logical l_cloud_only
+
 !       Get parameters for laps_deriv_sub call
         call get_meso_sao_pirep(N_MESO,N_SAO,N_PIREP,istatus)
         if (istatus .ne. 1) then
@@ -256,9 +258,14 @@ cdis
      1                  pres_sfc_pa,                 ! I
      1                  temp_sfc_k,                  ! I
      1                  dbz_max_2d,istat_lps,        ! O
-     1                  twet_snow,                   ! O
+     1                  twet_snow,l_cloud_only,      ! O
      1                  j_status,                    ! O
      1                  istatus1)                    ! O
+
+        if(l_cloud_only)then
+            write(6,*)' Skipping stability and fire sections'
+            go to 999
+        endif
 
 !       istat_lps = 0 ! Temporary until this is wired in'
         istat_twet_snow = 1 ! if we get this far the read was successful
@@ -340,7 +347,7 @@ cdis
 
  
        subroutine get_deriv_parms(mode_evap,l_bogus_radar_w,              ! O
-     1                            l_deep_vv,                              ! O
+     1                            l_deep_vv,l_cloud_only,                 ! O
      1                            vv_to_height_ratio_Cu,                  ! O
      1                            vv_to_height_ratio_Sc,                  ! O
      1                            vv_for_St,                              ! O
@@ -361,9 +368,10 @@ cdis
 
        character*20 c_z2m
 
-       logical l_bogus_radar_w, l_deep_vv
+       logical l_bogus_radar_w, l_deep_vv, l_cloud_only
 
        namelist /deriv_nl/ mode_evap, l_bogus_radar_w, l_deep_vv,
+     1                     l_cloud_only,
      1                     vv_to_height_ratio_Cu,
      1                     vv_to_height_ratio_Sc,
      1                     vv_for_St,
@@ -381,6 +389,7 @@ cdis
        hydrometeor_scale_cldliq = 0.2
        hydrometeor_scale_cldice = 0.2
        hydrometeor_scale_pcp    = 1.0
+       l_cloud_only = .false.
  
        call get_directory('static',static_dir,len_dir)
 
