@@ -2,9 +2,9 @@ netcdf lwc {
 
     dimensions:
         record = unlimited,
-        z = 21,
-	x = 125,
-	y = 105,
+        z = 43,
+	x = 999,
+	y = 599,
         nav = 1,
         namelen = 132;
 		
@@ -22,6 +22,7 @@ netcdf lwc {
             lwc:LAPS_var="LWC";
             lwc:lvl_coord="HPA";
 	    lwc:LAPS_units="KG/M**3";
+            lwc:_DeflateLevel = 2 ;
                 	        
         //	cloud ice
 
@@ -36,6 +37,7 @@ netcdf lwc {
             ice:LAPS_var="ICE";
             ice:lvl_coord="HPA";
 	    ice:LAPS_units="KG/M**3";
+            ice:_DeflateLevel = 2 ;
                 	        
        //      snow content
         float
@@ -49,6 +51,7 @@ netcdf lwc {
             sno:LAPS_var="SNO";
             sno:lvl_coord="HPA";
 	    sno:LAPS_units="KG/M**3";
+            sno:_DeflateLevel = 2 ;
 
         //      rain content
         float
@@ -62,7 +65,8 @@ netcdf lwc {
             rai:LAPS_var="RAI";
             rai:lvl_coord="HPA";
 	    rai:LAPS_units="KG/M**3";
-
+            rai:_DeflateLevel = 2 ;
+ 
        //      precipitating ice content (graupel,hail,sleet)
         float
             pic(record,z,y,x);
@@ -75,7 +79,8 @@ netcdf lwc {
             pic:LAPS_var="PIC";
             pic:lvl_coord="HPA";
 	    pic:LAPS_units="KG/M**3";
-
+            pic:_DeflateLevel = 2 ;
+ 
         //	hydrometeor concentration
 
 	float                                  
@@ -89,6 +94,7 @@ netcdf lwc {
             pcn:LAPS_var="PCN";
             pcn:lvl_coord="HPA";
 	    pcn:LAPS_units="KG/M**3";
+            pcn:_DeflateLevel = 2 ;
                 	        
         //	LAPS variables
 
@@ -225,7 +231,7 @@ netcdf lwc {
         :history = "created by LAPS Branch of FSL";
         :record = "valtime, reftime";
         :title = "LAPS lwc file - cloud liquid, ice and hydrometeor concentration";
-        :version = 3;
+        :_Format = "netCDF-4 classic model" ;
 
     data:
 
