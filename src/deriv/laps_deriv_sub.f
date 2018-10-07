@@ -51,7 +51,7 @@ cdis
      1                        pres_sfc_pa,
      1                        t_sfc_k,
      1                        dbz_max_2d,istatus_lps,    ! O
-     1                        twet_snow,                 ! O
+     1                        twet_snow,l_cloud_only,    ! O
      1                        j_status,istatus)
 
         use cloud_rad ! Cloud Radiation and Microphysics Parameters
@@ -142,6 +142,7 @@ cdis
 
         real k_to_c
 
+        logical l_cloud_only
         logical l_packed_output
         logical l_evap_radar
 
@@ -385,7 +386,7 @@ cdis
         endif
 
         call get_deriv_parms(mode_evap,l_bogus_radar_w,              ! O
-     1                       l_deep_vv,                              ! O
+     1                       l_deep_vv,l_cloud_only,                 ! O
      1                       vv_to_height_ratio_Cu,                  ! O
      1                       vv_to_height_ratio_Sc,                  ! O
      1                       vv_for_St,                              ! O
