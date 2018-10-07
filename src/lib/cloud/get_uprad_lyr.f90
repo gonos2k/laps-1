@@ -17,10 +17,13 @@
         real, allocatable :: disti_a(:,:)
         real, allocatable :: distj_a(:,:)
 
-        radius = 120000.
-        iradius = nint(radius / grid_spacing_m)
-
-        write(6,*)' ht/radius/iradius = ',ht,radius,iradius
+        if(.false.)then
+          radius = 120000.
+          iradius = nint(radius / grid_spacing_m)
+          write(6,*)' ht/radius/iradius = ',ht,radius,iradius
+        else
+          iradius = max(ni,nj)
+        endif
 
         allocate(drad(-iradius:+iradius,-iradius:+iradius))
         allocate(aef(-iradius:+iradius,-iradius:+iradius))
@@ -70,9 +73,11 @@
 
         write(6,*)' iskip = ',iskip
 
-!       Loop through each gridpoint on the layer array
-        do i = 1,ni,iskip
-        do j = 1,nj,iskip
+        if(.false.)then
+
+!        Loop through each gridpoint on the layer array
+         do i = 1,ni,iskip
+         do j = 1,nj,iskip
 
 !         Index limits of layer array
           imin = max(i-iradius,1)
@@ -134,22 +139,57 @@
             endif
 
           endif
-        enddo ! j
-        enddo ! i
+         enddo ! j
+         enddo ! i
 
-!       Interpolate to fill in the horizontal
-!       Note that the integrated radiance over the hemisphere gives
-!       irradiance. We can multiply that by the extinction
-!       coefficient to obtain the emission density "S", equivalent to
-!       radiant flux per unit volume.
-        do ic = 1,nc
+!        Interpolate to fill in the horizontal
+!        Note that the integrated radiance over the hemisphere gives
+!        irradiance. We can multiply that by the extinction
+!        coefficient to obtain the emission density "S", equivalent to
+!        radiant flux per unit volume.
+         do ic = 1,nc
            write(6,*)' fill horizontal layer to yield uprad (wm2nm) for color',ic
            write(6,*)' range of uprad ',minval(uprad_3d(:,:,ic)),maxval(uprad_3d(:,:,ic))
            call bilinear_fill(uprad_3d(:,:,ic),ni,nj,iskip,r_missing_data)
            write(6,*)' range of uprad ',minval(uprad_3d(:,:,ic)),maxval(uprad_3d(:,:,ic))
-        enddo ! ic
-        call bilinear_fill(xcos(:,:),ni,nj,iskip,r_missing_data)
-        call bilinear_fill(ycos(:,:),ni,nj,iskip,r_missing_data)
+         enddo ! ic
+         call bilinear_fill(xcos(:,:),ni,nj,iskip,r_missing_data)
+         call bilinear_fill(ycos(:,:),ni,nj,iskip,r_missing_data)
+
+        else ! alternate looping strategy (UNDER CONSTRUCTION)
+
+!        Loop through each gridpoint on the layer array
+         radius_max = 0.
+         do i = 1,ni
+         do j = 1,nj
+           if(gnd_radc(1,i,j) .gt. 0.)then
+             radius = (gnd_radc(1,i,j)**0.4) * 3e7
+             radius_max = max(radius,radius_max) 
+             iradius = nint(radius / grid_spacing_m)
+
+             imin = max(i-iradius,1)
+             imax = min(i+iradius,ni)
+             jmin = max(j-iradius,1)
+             jmax = min(j+iradius,nj)
+
+!            Surrounding area loop of layer array
+             do ii = imin,imax
+             do jj = jmin,jmax
+               idif = ii-i
+               jdif = jj-j 
+!              do ic = 1,nc
+                 uprad_3d(ii,jj,:) = uprad_3d(ii,jj,:) + drad(idif,jdif) * gnd_radc(:,i,j) * aef(idif,jdif)
+!              enddo ! ic
+             enddo ! jj
+             enddo ! ii
+
+           endif
+         enddo ! j
+         enddo ! i
+
+         write(6,*)' radius_max = ',radius_max
+
+        endif
 
 999     deallocate(drad)
         deallocate(aef)
