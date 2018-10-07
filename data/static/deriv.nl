@@ -12,6 +12,7 @@
  thresh_cvr_cty_vv=0.65,
  thresh_cvr_lwc=0.65,
  twet_snow=+1.3,
+ L_CLOUD_ONLY = .false.,
  /
 
 c DERIV PARAMETERS
@@ -58,3 +59,4 @@ c
 c thresh_cvr_lwc - cloud cover threshold used for cloud liquid/ice
 c
 c twet_snow - wet bulb snow melting threshold (degrees C)
+c l_cloud_only - run derived cloud fields only, skipping stability/fire fields
