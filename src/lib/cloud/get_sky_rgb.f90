@@ -73,6 +73,7 @@
         real clear_rad_c_tot(nc,ni,nj) ! night sky spectral radiance from lights + airglow
         real clear_rad_c_airglow(nc,ni,nj) ! airglow (nL)
         real airglow_zen_nl_c(nc)   ! airglow spectral radiance at zenith (nL)
+        real sprad_to_nl(nc)        ! (wm2srnm to nL)
         real ave_rad_toa_c(nc,ni,nj)! average (airglow + stars and such)
         real ag_2d(ni,nj)           ! gas airmass (topo/notopo)
         real glow_sun(ni,nj)        ! sunglow (log nl, extendd obj, extnct)
@@ -949,10 +950,10 @@
 !           radiance where 3e9nl is defined as the sun at that color
 !           spread over a spherical solid angle.
             call nl_to_sprad(1.,1,wa(ic),sprad)
-            sprad_to_nl = 1. / sprad
+            sprad_to_nl(ic) = 1. / sprad
 !                             X      * 7e2
-            write(6,*)' nlights glow: ic|sprad_to_nl ',ic,sprad_to_nl
-            clear_rad_c_nl(ic,:,:) = clear_rad_c_nl(ic,:,:) * sprad_to_nl
+            write(6,*)' nlights glow: ic|sprad_to_nl ',ic,sprad_to_nl(ic)
+            clear_rad_c_nl(ic,:,:) = clear_rad_c_nl(ic,:,:) * sprad_to_nl(ic)
             write(6,*)' Range of clear_rad_c_nl inputted (nL)',minval(clear_rad_c_nl(ic,:,:)),maxval(clear_rad_c_nl(ic,:,:))
         enddo
 
@@ -1220,7 +1221,8 @@
               enddo ! ic
 
               cld_rad(:) = cld_radt(:) * r_cloud_rad(i,j) & 
-                         + cld_radb(:) * (1.0 - r_cloud_rad(i,j))
+                         + cld_radb(:) * (1.0 - r_cloud_rad(i,j)) &
+                         + cloud_rad_c_nt(:,i,j) * sprad_to_nl(:) * cloud_albedo * opac(cloud_od_loc(i,j)) ! wm2srnm_2_nl
 
 !             Apply cloud reddening from viewer intervening airmass
 !             This may be redundant with cloud_visibility
@@ -1321,7 +1323,8 @@
 !             early twilight away from the bright twilight arch.
 !             The result creates a contrast effect for clouds vs twilight    
 
-              cld_rad(:) = 10. ** glow_cld_c(:) ! newly defined
+              cld_rad(:) = 10. ** glow_cld_c(:) & ! newly defined
+                         + cloud_rad_c_nt(:,i,j) * sprad_to_nl(:) ! wm2srnm_2_nl
 
               if(idebug .eq. 1 .AND. r_cloud_3d(i,j) .gt. 0.)then ! cloud present
                   if(cloud_rad_c(2,i,j) .ge. 1e20)then
@@ -1503,7 +1506,7 @@
 
           if(idebug .eq. 1)then
               write(6,91)i,j,idebug,elong_a(i,j),glow_air,glow_nt,glow_moon_s,glow_stars(2,i,j),glow_tot,clear_rad_c(:,i,j),cloud_rad_c_nt(2,i,j)
-91            format('   glow: elg/air/nt/moon/stars/tot/rad/cldrdcnt = ',3i5,f7.1,5f9.3,3f11.0,f12.0)
+91            format('   glow: elg/air/nt/moon/stars/tot/rad/cldrdcnt = ',3i5,f7.1,5f9.3,3f11.0,f12.7)
           endif
 
           do ic = 1,nc 
