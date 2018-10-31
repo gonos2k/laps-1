@@ -65,14 +65,16 @@ c     real,   allocatable ::    islopetmp     (:,:)
       real    sumg
       real    sum(ncat)
       real    tslp
+      real    grid_spacing_m, dist_thresh
 
+      write(6,*)' Start adjust_geog ',ctype
+ 
       istatus=0
       if(istat_dat.eq.0)then  !.and.istattmp.eq.0.and.istatslp.eq.0)then
 	 print*,'Unable to process geog data in adjust_geog ...'
      &,' processsing of data failed prior to subroutine call.'
 	 return
       endif
-
 
 c use moist adiabatic laps rate (6.5 deg/km) to get new temp
  
@@ -370,6 +372,11 @@ c this section for categories (terrain slope or soiltype)
 c
       elseif(ctype.eq.'islope'.or.ctype.eq.'soiltype')then
 
+         call get_grid_spacing(grid_spacing_m,istatus)
+         dist_thresh = 600e3
+         ijsthresh = int(dist_thresh / grid_spacing_m) ! special smaller value
+         write(6,*)' ijsthresh special value is ',ijsthresh
+
          do j = 1,nnyp
          do i = 1,nnxp
 
@@ -386,6 +393,9 @@ c
                   js=1
 
                   do while (.not.endsearch)
+                     if(i .eq. 1)then
+                         write(6,*)' soil type search ',i,j,is
+                     endif
                      do ii=i-is,i+is
                      do jj=j-js,j+js
 
@@ -574,6 +584,8 @@ c then use average value
       endif
 
       istatus=1
+
+      write(6,*)' Returning from adjust_geog...'
 
       return
       end
