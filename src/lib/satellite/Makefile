@@ -42,6 +42,7 @@ SRC=bcdtoint.F \
     getsat_boundary.f \
     lvd_file_specifier.f \
     rdcdfhead.f \
+    rdgr2head.f \
     rdgvarimg_cdf_header.f \
     read_gwc_header_sub.f \
     read_orb_att.f \
