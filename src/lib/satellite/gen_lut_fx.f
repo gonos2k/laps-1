@@ -56,7 +56,14 @@ c
       real    rel_ri(nx_l+2,ny_l+2)
       real    rel_rj(nx_l+2,ny_l+2)
       real    ri_laps(nx_l,ny_l)         ! Output
-      real    rj_laps(nx_l,ny_l)         ! Output
+      real    rj_laps(nx_l,ny_l) ! Output
+
+      real emission_angle_d(nx_l+2,ny_l+2)
+      real phase_angle_d(nx_l+2,ny_l+2)
+      real specular_ref_angle_d(nx_l+2,ny_l+2)
+      real azimuth_d(nx_l+2,ny_l+2)
+      real range_m
+      real sublat_d_a(nx_l+2,ny_l+2), sublon_d_a(nx_l+2,ny_l+2)
 
       integer isat,jtype,kchl
 c     integer i,j,n,nc
@@ -71,6 +78,9 @@ c     integer i,j,n,nc
       integer linestart,lineend
       integer elemstart,elemend
       integer nijout
+      integer isector /2/       ! 0=Dynamic, 1=FullDisk, 2=CONUS
+      integer i4time_latest, ifstat, i4time_sys
+      integer I4_elapsed, ishow_timer
 
       logical lpoint
 
@@ -143,30 +153,67 @@ c
          endif
 
       else ! Level 2 'gr2' type
-         if(indx.eq.1)then ! vis
-            nxfx = 6000
-            nyfx = 10000
-!           rlatc=(55. + (-5.)) / 2.
-!           rlonc=(68. + 148. ) / 2.
-            xmin = 0. ! float(nxfx)
-            ymin = 0.
-            offset_x = -0.101353 ! radians
-            offset_y = +0.128233 ! radians
-            dx = 14. * 1d-6        ! radians
-            dy = 14. * 1d-6        ! radians
-            sub_lon_degrees = -75.0
-         else              ! IR
-            nxfx = 1500
-            nyfx = 2500
-!           rlatc=(55. + (-5.)) / 2.
-!           rlonc=(68. + 148. ) / 2.
-            xmin = 0. ! float(nxfx)
-            ymin = 0.
-            offset_x = -0.101332 ! radians
-            offset_y = +0.128212 ! radians
-            dx = 56. * 1d-6        ! radians
-            dy = 56. * 1d-6        ! radians
-            sub_lon_degrees = -75.0
+         if(isector .eq. 0)then ! Dynamic Sector
+
+!           call s_len(path_to_raw_sat(kchl,jtype,isat),np)
+!           fname=path_to_raw_sat(kchl,jtype,isat)(1:np)
+            fname=fname(1:np)//'*_'//ct
+            call get_latest_file_time(fname,i4time_latest)
+            call make_fnam_lp(i4time_latest,cftime9,ifstat)
+!           fname=path_to_raw_sat(kchl,jtype,isat)(1:np)
+            fname=fname(1:np)//cftime9//'_'//ct
+         
+            call rdgr2head(fname, Nx, Ny, xmin, ymin,
+     +         offset_x, offset_y,
+     +         Dx, Dy, sub_lon_degrees)
+
+            continue ! read NetCDF Header (under construction)
+
+         elseif(isector .eq. 1)then ! Full Disk
+            if(indx.eq.1)then ! vis
+               nxfx = 21696
+               nyfx = 21696
+               xmin = 0. ! float(nxfx)
+               ymin = 0.
+               offset_x = -0.151844    ! radians
+               offset_y = +0.151844    ! radians
+               dx = 14. * 1d-6         ! radians
+               dy = 14. * 1d-6         ! radians
+               sub_lon_degrees = -75.0 ! depends on satellite
+            else              ! IR
+               nxfx = 5424
+               nyfx = 5424
+               xmin = 0. ! float(nxfx)
+               ymin = 0.
+               offset_x = -0.151844    ! radians
+               offset_y = +0.151844    ! radians
+               dx = 56. * 1d-6         ! radians
+               dy = 56. * 1d-6         ! radians
+               sub_lon_degrees = -75.0 ! depends on satellite
+            endif
+
+         else ! isector = 2 (CONUS)
+            if(indx.eq.1)then ! vis
+               nxfx = 6000
+               nyfx = 10000
+               xmin = 0. ! float(nxfx)
+               ymin = 0.
+               offset_x = -0.101353    ! radians
+               offset_y = +0.128233    ! radians
+               dx = 14. * 1d-6         ! radians
+               dy = 14. * 1d-6         ! radians
+               sub_lon_degrees = -75.0 ! depends on satellite
+            else              ! IR
+               nxfx = 1500
+               nyfx = 2500
+               xmin = 0. ! float(nxfx)
+               ymin = 0.
+               offset_x = -0.101332    ! radians
+               offset_y = +0.128212    ! radians
+               dx = 56. * 1d-6         ! radians
+               dy = 56. * 1d-6         ! radians
+               sub_lon_degrees = -75.0 ! depends on satellite
+            endif
          endif
 
       endif
@@ -200,7 +247,27 @@ c
 c
 c laps domain as specified in laps lat/lon arrays.
 c
-      call  latlon_2_fxij(nx*ny,xlat,xlon,ri,rj)
+      call latlon_2_fxij(nx*ny,xlat,xlon,ri,rj)
+
+      I4_elapsed = ishow_timer()
+      
+      write(6,*)' Filter out points beyond the limb'
+      call get_systime_i4(i4time_sys,istatus)
+
+      range_m = 42155680.00
+      sublat_d_a(:,:) = 0.              ! only scalar might really be needed
+      sublon_d_a(:,:) = sub_lon_degrees ! only scalar might really be needed
+      call satgeom(i4time_sys,xlat,xlon,nx,ny
+     1   ,sublat_d_a,sublon_d_a,range_m,r_missing_data
+     1   ,Phase_angle_d,Specular_ref_angle_d,emission_angle_d
+     1   ,azimuth_d,istatus)
+
+      where (emission_angle_d(:,:) .le. 5.0)
+          ri(:,:) = r_missing_data
+          rj(:,:) = r_missing_data
+      endwhere
+
+      I4_elapsed = ishow_timer()
 
       write(6,*)'Sat ri/rj for expanded model domain corners'
       write(6,*)'ri1/rj1 (SW) ',ri(1,1),rj(1,1)
