@@ -1,34 +1,3 @@
-cdis    Forecast Systems Laboratory
-cdis    NOAA/OAR/ERL/FSL
-cdis    325 Broadway
-cdis    Boulder, CO     80303
-cdis 
-cdis    Forecast Research Division
-cdis    Local Analysis and Prediction Branch
-cdis    LAPS 
-cdis 
-cdis    This software and its documentation are in the public domain and 
-cdis    are furnished "as is."  The United States government, its 
-cdis    instrumentalities, officers, employees, and agents make no 
-cdis    warranty, express or implied, as to the usefulness of the software 
-cdis    and documentation for any purpose.  They assume no responsibility 
-cdis    (1) for the use of the software and documentation; or (2) to provide
-cdis     technical support to users.
-cdis    
-cdis    Permission to use, copy, modify, and distribute this software is
-cdis    hereby granted, provided that the entire disclaimer notice appears
-cdis    in all copies.  All modifications to this software must be clearly
-cdis    documented, and are solely the responsibility of the agent making 
-cdis    the modifications.  If significant modifications or enhancements 
-cdis    are made to this software, the FSL Software Policy Manager  
-cdis    (softwaremgr@fsl.noaa.gov) should be notified.
-cdis 
-cdis 
-cdis 
-cdis 
-cdis 
-cdis 
-cdis 
         Subroutine satgeom(i4time,lat,lon,ni,nj
      1  ,sublat_d_a,sublon_d_a,range_m,r_missing_data,Phase_angle_d
      1  ,Specular_ref_angle_d,Emission_angle_d,azimuth_d,istatus)
@@ -60,7 +29,7 @@ C***Local variables
      1          refx,refy,refz
 
 ! Note that solar_factor and phase_factor originally were declared to maxlut
-        Real  normfac,imgtmp,                                                                               
+        Real  normfac,imgtmp,
      1          solar_alt_d(ni,nj),
      1          XFrac,YFrac,
      1          SF_UL,SF_UR,SF_LR,SF_LL,SF_U,SF_L,S_F,Weight,
@@ -68,7 +37,7 @@ C***Local variables
      1          Phase_factor(ni,nj),Phase_angle_d(ni,nj),
      1          sat_radius,Emission_angle_d(ni,nj),
      1          azimuth_d(ni,nj),
-     1          Specular_ref_angle_d(ni,nj)       
+     1          Specular_ref_angle_d(ni,nj)
 
         Real RBril_a(ni,nj),RBrih_a(ni,nj)
 
@@ -81,7 +50,7 @@ C***Local variables
         if(istatus .ne. 1)return
 
         lun = 6
-        write(lun,*)' Begin satgeom at ',a9time       
+        write(lun,*)' Begin satgeom at ',a9time
 
         call zero(phase_angle_d,ni,nj)
         call zero(emission_angle_d,ni,nj)
@@ -94,7 +63,7 @@ C***Where's the sun?
 !       meridian and distances in AU (geocentric equatorial).
         rlat = 0.
         rlon = 0.
-        call solar_position(rlat,rlon,i4time,solar_alt_deg       
+        call solar_position(rlat,rlon,i4time,solar_alt_deg
      1                     ,solar_dec_d,hr_angle_d)
         solar_range = 1.
         solar_sublon_d = -hr_angle_d
@@ -106,7 +75,7 @@ C***Where's the sun?
         au_m = 149000000.
         sat_radius = range_m / au_m
 
-        write(lun,*)'    I    J    ALT    EMIS   PHA    PF   VIS  SPEC'       
+        write(lun,*)'    I    J    ALT    EMIS   PHA    PF   VIS  SPEC'
 
 C***Fill the solar brightness and phase angle arrays
         normfac=sind(58.)       ! Normalized sun angle
@@ -121,15 +90,8 @@ C***Fill the solar brightness and phase angle arrays
           SATY = sind(sublon_d) * cosd(sublat_d) * sat_radius
           SATZ = sind(sublat_d)                  * sat_radius
 
-          intvl = max(ni/21,1)
-          if(j .eq. nj/2 .AND. i .eq. (i/intvl)*intvl)then
-              idebug = 1
-          else
-              idebug = 0
-          endif
-
 C   Compute Emission Angle (Emission_angle_d = satellite angular altitude)
- 
+
           call sat_angular_alt(sat_radius,lat(i,j),lon(i,j)
      .,SATX,SATY,SATZ,TX,TY,TZ,Emission_angle_d(i,j),istatus)
 
@@ -143,9 +105,21 @@ C   Compute Emission Angle (Emission_angle_d = satellite angular altitude)
           DY=SATY-TY
           DZ=SATZ-TZ
 
+          intvl = max(ni/21,1)
+          if(j .eq. nj/2 .AND.
+     1         (i .eq. (i/intvl)*intvl .or.
+     1         (Emission_angle_d(i,j) .gt. 0.0
+     1          .and. Emission_angle_d(i,j) .le. 10.0)) )then
+              idebug = 1
+          else
+              idebug = 0
+          endif
+
           if(idebug .eq. 1)then
               write(6,*)
-              write(6,*)'/lon/sub/DX/DY/DZ',lon(i,j),sublon_d,DX,DY,DZ       
+              write(6,11)lon(i,j),sublon_d,DX,DY,DZ
+     1                  ,Emission_angle_d(i,j)
+11            format('/lon/sub/DX/DY/DZ/emis',6f11.4)            
           endif
 
 !         Rotate this vector around Z axis to get local cartesian coordinates
