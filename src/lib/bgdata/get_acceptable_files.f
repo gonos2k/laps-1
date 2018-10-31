@@ -331,6 +331,7 @@ c ---------------------------------------------------------------------------
           endif
 
           bg_files=ij
+          print *, 'Printing bg_names : names'
           do i=1,bg_files
              bg_names(i)=bgnames_tmp(i)
              IF ((bgmodel .EQ. 4).OR.(bgmodel.EQ.10))THEN
