@@ -53,6 +53,8 @@
            COMScount2tbNrad_sub              COMScount2tbNrad_sub.f90
            get_goes_np_data                  get_goes_np_data.f
 	       read_goes_np_data                  "
+           get_goes_l2_data                  get_goes_l2_data.f
+	       read_goes_np_data                  "
            genbtemplut                       genbtemplut.f
            satdatfill                        satdatfill.f
                set_missing_sat               set_missing_sat.f
