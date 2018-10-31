@@ -191,7 +191,6 @@ c
       real r_image_status(maxchannel,max_files)
 
       integer ishow_timer
-      integer init_timer
       integer i4time_cur,i4time_offset,i4time_goes
       integer i4time_now
       integer i4time_now_gg
@@ -244,7 +243,6 @@ c
          goto 16
       endif
 
-      itstatus=init_timer()
       itstatus=ishow_timer()
 
 c     do i=1,nimages
@@ -686,7 +684,7 @@ c March 2003 added HKO (gms) sat ingest
      +                   ,image_vis,n_vis_elem,n_vis_lines
      +                   ,i4time_goes,istatus)                      ! O
            if(istatus .eq. 1)then
-              write(6,*)' Sucessful return from get_goes_np_data'
+              write(6,*)' Successful return from get_goes_np_data'
               goto 110
            endif
          enddo
@@ -721,7 +719,7 @@ c March 2003 added HKO (gms) sat ingest
      +                   ,image_vis,n_vis_elem,n_vis_lines
      +                   ,i4time_goes,istatus)                      ! O
            if(istatus .eq. 1)then
-              write(6,*)' Sucessful return from get_goes_l2_data'
+              write(6,*)' Successful return from get_goes_l2_data'
               goto 120
            else
               write(6,*)' No data from get_goes_l2_data for this time'
