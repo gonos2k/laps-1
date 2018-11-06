@@ -725,17 +725,31 @@ c     enddo
  
       dlond=dlon
       dlatd=dlat
+
+      rlon_width = float(nx) * dlond
+      write(6,*)' latlon_2_llij: rlon_width = ',rlon_width
+      
       if(cgrddef.eq.'S')then
          do n=1,np
             diff=glon(n)-lon0
-            if (diff .lt. -180.) diff=diff+360.
+            if(rlon_width .lt. 170.)then ! regional
+               if (diff .lt. -180.) diff=diff+360.
+            else ! global (e.g. GFS)
+               if (diff .lt. 0.)   diff=diff+360.
+               if (diff .ge. 360.) diff=diff-360.
+            endif
             lli(n)=diff/dlond+1.
             llj(n)=(glat(n)-lat0)/dlatd+1.
          enddo
       elseif(cgrddef.eq.'N')then
          do n=1,np
             diff=glon(n)-lon0
-            if (diff .lt. -180.) diff=diff+360.
+            if(rlon_width .lt. 170.)then ! regional
+               if (diff .lt. -180.) diff=diff+360.
+            else ! global (e.g. GFS)
+               if (diff .lt. 0.)   diff=diff+360.
+               if (diff .ge. 360.) diff=diff-360.
+            endif
 !           write(6,*)glon(n),lon0,diff
             lli(n)=diff/dlon+1.
             llj(n)=(lat0-glat(n))/dlat+1.
@@ -1255,7 +1269,7 @@ c set tolerance based upon the grid spacing as a function of grx/gry
       tolx=(abs(grxdifsum1)/ny_laps+abs(grxdifsum2)/ny_laps)*0.5
       toly=(abs(grydifsum1)/nx_laps+abs(grydifsum2)/nx_laps)*0.5
 
-      print*,'horiz mapping tolerance x/y: ',tolx,toly
+      print*,'horiz mapping tolerance x/y: ',tolx,toly,wrapped
       lprintmessage=.true.
 c
 c *** First, check for wrapping if a global data set.
@@ -1310,11 +1324,22 @@ CWNI           endif
 CWNI        enddo
 CWNI     enddo
 
-      elseif( wrapped ) then ! SCA
-              
+      elseif( wrapped ) then ! e.g. global dataset
+         if (grx(i,j) .lt. 1 .or. grx(i,j) .gt. nx_bg .or.
+     .       gry(i,j) .lt. 1 .or. gry(i,j) .gt. ny_bg) then
+           do j=1,ny_laps
+             do i=1,nx_laps
+               if(lprintmessage)then
+                  print*,'Domain gridpt outside of bkgd data coverage.'
+                  print*,'   data i,j,lat,lon - ',i,j,lat(i,j),lon(i,j)
+                  print*,'   grx, gry:',grx(i,j),gry(i,j)
+                  lprintmessage=.false.
+c                 stop 'init_hinterp'
+               endif
+             enddo
+           enddo
+         endif
 
-
-c
 c ****** If not a global data set, then check that LAPS domain is fully
 c           within background domain.
 c
@@ -1429,13 +1454,20 @@ c
       integer istatus
       real    r_missing_data
 c
-      write(6,*)' Subroutine hinterp_field_3d'
+      write(6,*)' Subroutine hinterp_field_3d ',wrapped
+
+      iwrite = 0
 
       call get_r_missing_data(r_missing_data,istatus)
       if(istatus.ne.1)then
          print*,'Error getting r_missing_data - hinterp_field'
          return
       endif
+
+      write(6,*)' Center input column',fvi(nx_bg/2,ny_bg/2,:)
+
+      write(6,*)' Center grx,gry ',grx(nx_laps/2,ny_laps/2)
+     1                            ,gry(nx_laps/2,ny_laps/2)
 c
 c *** Horizontally interpolate variable.
 c
@@ -1452,7 +1484,6 @@ c
 
           stax = grx(il,jl)
           stay = gry(il,jl)
-
             
 !         dimension ab(ix,iy),r(4),scr(4)
 !         logical wrapped ! WNI added
@@ -1650,14 +1681,23 @@ c
 !              return
 !              end
 
-             enddo ! k
+               if(k .eq. 1)then
+                 if(staval(1).eq.missingflag)then
+                   iwrite = iwrite + 1
+                   if(iwrite .le. 100)then
+                     write(6,11)il,jl,i,j,stax,stay,ix1,ix2,iy1,iy2
+     1                         ,fvi(il,jl,1),xx,yy,r(:,k),y1,y2,y3,y4      
+     1                         ,xxx,yyy
+11                   format(' hinterp_field_3d: staval = missingflag'  
+     1                     ,4i5,2f9.2,4i5,13f9.2)
+                   endif
+                 endif
+               endif
+
+              enddo ! k
 
             endif ! xx = 2
 c
-            if(staval(1).eq.missingflag)then
-               print*,'hinterp_field_3d: staval = missingflag ',il,jl
-            endif
-
             flaps(il,jl,:) = staval(:)
 !           return
 !           end
