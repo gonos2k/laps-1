@@ -144,10 +144,10 @@ subroutine degrib_nav(gribflnm, vtablefn, nx, ny, nz, &
 
         write(6,*)' initial lat/lon from map structure',map%lat1,map%lat2,map%lon1,map%lon2
 
-        if (map%lat1.gt.10000.) map%lat1=map%lat2/1000000
-        if (map%lon1.gt.10000.) map%lon1=map%lon2/1000000
-        if (map%lat2.gt.10000.) map%lat2=map%lat2/1000000
-        if (map%lon2.gt.10000.) map%lon2=map%lon2/1000000
+        if (abs(map%lat1).gt.10000.) map%lat1=map%lat2/1000000
+        if (abs(map%lon1).gt.10000.) map%lon1=map%lon2/1000000
+        if (abs(map%lat2).gt.10000.) map%lat2=map%lat2/1000000
+        if (abs(map%lon2).gt.10000.) map%lon2=map%lon2/1000000
 
         write(6,*)' adjusted lat/lon from map structure',map%lat1,map%lat2,map%lon1,map%lon2
 
@@ -281,7 +281,9 @@ subroutine degrib_data(gribflnm, nx, ny, nz, &
 ! -----------------
 ! Determine GRIB Edition number
   grib_version=0
+  write(6,*)' degrib_data: call edition_num'
   call edition_num(nunit1, gribflnm, grib_version, ierr)
+  write(6,*)' degrib_data: call mprintf'
   call mprintf((ierr.eq.3),ERROR,"GRIB file problem")
 
 ! -----------------
@@ -303,6 +305,7 @@ subroutine degrib_data(gribflnm, nx, ny, nz, &
         ! Clear the storage arrays and associated level information.
         nlvl = 0
         plvl = -999.
+        write(6,*)' degrib_data: call clear_storage'
         call clear_storage
 
 ! LOOP0 reads through the file GRIBFLNM, looking for data of the current 
@@ -326,6 +329,7 @@ subroutine degrib_data(gribflnm, nx, ny, nz, &
               else 
 
                  ! Read one file of records from GRIB2.
+                 write(6,*)' degrib_data: call rd_grib2'
                  call rd_grib2(nunit1, gribflnm, hdate, &
                       grib_version, ierr, debug_level)
                  FIELD='NULL'
@@ -354,6 +358,7 @@ subroutine degrib_data(gribflnm, nx, ny, nz, &
            if (((field == "SST").or.(field == "SKINTEMP")) .and. &
                 (level /= 200100.)) level = 200100.
            iplvl = int(level)
+           write(6,*)' degrib_data: call put_storage',map%nx,map%ny
            call put_storage(iplvl,field, &
                 reshape(rdatarray(1:map%nx*map%ny),(/map%nx, map%ny/)),&
                 map%nx,map%ny)
