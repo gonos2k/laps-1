@@ -70,7 +70,7 @@
          img_png = trim(camera_path)//'/verif_allsky_mask.dsrc.'//a9time//'.png'
          img_ppm = trim(camera_path)//'/verif_allsky_mask.dsrc.'//a9time//'.ppm'
         
-         convert_cmd = 'convert -compress none '//trim(img_png)//' '//trim(img_ppm)
+         convert_cmd = 'convert -compress none -depth 8 '//trim(img_png)//' '//trim(img_ppm)
          write(6,*)trim(convert_cmd)
          call system(trim(convert_cmd))
 
@@ -124,7 +124,7 @@
            img_png = trim(camera_path)//'/camera_allsky_mask.dsrc.'//a9time//'.png'
            img_ppm = trim(camera_path)//'/camera_allsky_mask.dsrc.'//a9time//'.ppm'
         
-           convert_cmd = 'convert -compress none '//trim(img_png)//' '//trim(img_ppm)
+           convert_cmd = 'convert -compress none -depth 8 '//trim(img_png)//' '//trim(img_ppm)
            write(6,*)trim(convert_cmd)
            call system(trim(convert_cmd))
            open(u,file=trim(img_ppm),status='old',err=999)
@@ -277,7 +277,7 @@
          imgdir = '/data/fab/projects/allsky/sites/dsrc/output3'
          img_png = trim(imgdir)//'/'//a13name//'_'//trim(site)//'.png'
          img_ppm = trim(imgdir)//'/'//a13name//'_'//trim(site)//'.ppm'
-         convert_cmd = 'convert -compress none '//trim(img_png)//' '//trim(img_ppm)
+         convert_cmd = 'convert -compress none -depth 8 '//trim(img_png)//' '//trim(img_ppm)
          write(6,*)trim(convert_cmd)
          call system(trim(convert_cmd))
 
@@ -301,8 +301,8 @@
 
          img_png = trim(imgdir)//'/'//a13name//'_'//trim(site)//'.png'
          img_ppm = trim(imgdir)//'/'//a13name//'_'//trim(site)//'.ppm'
-!        convert_cmd = 'convert -crop 21x11+0+0 -compress none '//trim(img_png)//' '//trim(img_ppm)
-         convert_cmd = 'convert -resize 100% -compress none '//trim(img_png)//' '//trim(img_ppm)
+!        convert_cmd = 'convert -crop 21x11+0+0 -compress none -depth 8 '//trim(img_png)//' '//trim(img_ppm)
+         convert_cmd = 'convert -resize 100% -compress none -depth 8 '//trim(img_png)//' '//trim(img_ppm)
          write(6,*)trim(convert_cmd)
          call system(trim(convert_cmd))
 
