@@ -605,8 +605,8 @@ c
 
 !     Determine satellites with help of 'satdata_lvd_table'
 
-      write(6,*)' csatid array: ',csatid
-      write(6,*)' satellite_ids array: ',csatid
+      write(6,*)' nsats = ',nsats
+      write(6,*)' satellite_ids (csatid) array: ',csatid(1:nsats)
 
       ISATS=0   
       do i=1,nsats
