@@ -1138,7 +1138,7 @@
 
               else ! outside image
                 if(jazi .eq. minazi)then
-                  write(6,21)ialt,jazi,pix_we,pix_sn,arglat,arglon
+!                 write(6,21)ialt,jazi,pix_we,pix_sn,arglat,arglon
 21                format(' outside image ',2i7,2f13.3,2f10.4)
                 endif              
 
