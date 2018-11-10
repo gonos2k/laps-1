@@ -1234,11 +1234,11 @@
      1         altray .eq. -7.5 .or.
      1         abs(altray) .eq. 21.00 .or.
      1         (abs(altray_limb) / radius_limb .le. 0.04) .or.
-     1         (altray_limb/radius_limb .lt. .01
-     1               .and. ialt .eq. (ialt/10) * 10)      .or.
+!    1         (altray_limb/radius_limb .lt. .01
+!    1               .and. ialt .eq. (ialt/10) * 10)      .or.
      1         abs(altray) .eq. 20. .or. abs(altray) .eq. 30. .or.
      1         abs(altray) .eq. 45. .or. abs(altray) .eq. 63.5 .or.
-     1         (altray .ge. -75.00 .and. altray .le. -70.00) .or.
+!    1         (altray .ge. -75.00 .and. altray .le. -70.00) .or.
      1         abs(altray) .eq. 75.) 
 !    1               .AND. altray .eq. nint(altray) 
      1                                                   )then
