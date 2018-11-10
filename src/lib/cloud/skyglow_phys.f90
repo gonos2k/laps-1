@@ -718,8 +718,10 @@
                     iverbose = 0
                   endif
                   do iopac = 1,nopac
-                    write(6,*)
-                    if(iverbose .eq. 2)write(6,*)' Calling sun_eclipse_parms at zenith, iopac = ',iopac
+                    if(iverbose .eq. 2)then
+                       write(6,*)
+                       write(6,*)' Calling sun_eclipse_parms at zenith, iopac = ',iopac
+                    endif
                     call sun_eclipse_parms(i4time,rlat,rlon,htmsl &
                      ,iverbose,altray,view_azi_deg,distecl(iopac,ic) &
                      ,earth_radius,elgms,emag,eobscf,eobsc_a(iopac,ic))
