@@ -1829,7 +1829,7 @@
 !               write(6,*)' Call cyl_to_polar with sky rgb data'
 
                 if(htagl(iloc) .le. 20.1 .and. 
-     1                  (maxalt*2 + minalt) .gt. 0)then
+     1                  (maxalt + minalt) .gt. 0)then ! midpoint above horizon
                   polat = +90. ! +/-90 for zenith or nadir at center of plot
                 else
                   polat = -90.
