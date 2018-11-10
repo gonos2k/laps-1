@@ -119,6 +119,9 @@
         data init /0/
         save init
 
+        data iwrite /0/
+        save iwrite
+
         if(init .eq. 0)then
             init = 1
             NSAT = 3
@@ -129,6 +132,11 @@
         temp_to_rad = temp
         temp_to_rad = VPLANC(temp,8)
 
+        if(iwrite .eq. 0)then
+            iwrite = 1
+            write(6,*)' temp,temp_to_rad ',temp,temp_to_rad
+        endif
+
         return
         end
 
@@ -136,6 +144,10 @@
 
         data init /0/
         save init
+
+        data iwrite /0/
+        save iwrite
+
         if(init .eq. 0)then
             init = 1
             NSAT = 3
@@ -144,6 +156,11 @@
 
         rad_to_temp = rad
         rad_to_temp = VBRITE(rad,8)
+
+        if(iwrite .eq. 0)then
+            iwrite = 1
+            write(6,*)' rad,rad_to_temp ',rad,rad_to_temp
+        endif
 
         return
         end

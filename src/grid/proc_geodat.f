@@ -15,9 +15,9 @@
 
       use horiz_interp
 
-      implicit none 
-      integer maxtiles 
-      integer nx_dom 
+      implicit none
+      integer maxtiles
+      integer nx_dom
       integer ny_dom
       integer ncat
       integer ntn,nt
@@ -95,7 +95,7 @@
       real    rmult
       real    min_val,max_val,def_val,val_mask
       real    r_missing_data
- 
+
       logical  dem_data
       logical  make_srcmask
       logical  lexist,lopen
@@ -123,8 +123,8 @@ c original create from Brent Shaw pseudocode
       dom_lats=dom_lats_in
       dom_lons=dom_lons_in
 
-! TH: 8 Aug 2002 Now we may need to adjust the longitude values in 
-! dom_lons so that they are always monotonically increasing, even if 
+! TH: 8 Aug 2002 Now we may need to adjust the longitude values in
+! dom_lons so that they are always monotonically increasing, even if
 ! we have the bad fortune to cross the date line.
       DO jj=1,ny_dom-1
          DO ii=1,nx_dom
@@ -229,7 +229,7 @@ c original create from Brent Shaw pseudocode
 !Define Array to keep count of number of raw tile data points found for each
 !model grid point
 
-! Find min/max atitude and longitude so we can compute which tiles to 
+! Find min/max atitude and longitude so we can compute which tiles to
 ! read
 
       minlat = MINVAL(dom_lats)
@@ -249,8 +249,13 @@ c     if(ctiletype .eq. 'G'.or.ctiletype.eq.'A')then
 c        if(min_lon.lt.-180)min_lon=360.+min_lon
 c     endif
 
-      print*,'max/min lats: ',max_lat,min_lat
-      print*,'max/min lons: ',max_lon,min_lon
+      if(ctiletype.eq.'A')then
+         min_lon = max(min_lon,-179.9999)
+         max_lon = min(max_lon,+179.9999)
+      endif
+
+      print*,'max/min lats: ',max_lat,min_lat,ctiletype
+      print*,'max/min lons: ',max_lon,min_lon,ctiletype
 
       deallocate(dom_lats,dom_lons)
 
@@ -304,7 +309,7 @@ c determine the x/y size dimensions and allocate/initialize the super tile
      ./float(itilesize_d))
       if(ctiletype.eq.'T' .or. ctiletype.eq.'M' .and.
      &itx.gt.360)itx=360
-      if(ctiletype.eq.'G' .or. ctiletype.eq.'A' .and. 
+      if(ctiletype.eq.'G' .or. ctiletype.eq.'A' .and.
      &itx.gt.2500)itx=2500
       print*,'allocate data_proc: nx/ny/ncat ',itx,ity,ncat
       allocate(data_proc(itx,ity,ncat))
@@ -320,7 +325,7 @@ c is relevant to the actual data points within the tile.
       dlon=dlat
       lat0=tile_s_lat+rsoff
       if(tile_w_lon.gt.180)then
-         lon0=tile_w_lon-360+rwoff 
+         lon0=tile_w_lon-360+rwoff
       elseif(tile_w_lon.lt.-180)then
          lon0=360+tile_w_lon+rwoff
       else
@@ -337,7 +342,7 @@ c is relevant to the actual data points within the tile.
       print*
 
       DO itile = 1, ntn  !number of tiles needed
- 
+
        ctilename=ctile_name_list(itile)
        cfname = path_to_tile_data(1:lenp)//ctilename(1:3)
        read(ctilename(4:6),'(i3.3)')icurEW
@@ -346,8 +351,8 @@ c is relevant to the actual data points within the tile.
           icurEW = 360 - icurEW
        ENDIF
        IF (icurEW == 180.and.curEW.ne.'W') THEN
-          curEW = 'W' 
-       END IF 
+          curEW = 'W'
+       END IF
 
        write(cfname(lenp+4:lenp+6),'(i3.3)')icurEW
        write(cfname(lenp+7:lenp+7),'(a1)')curEW
@@ -584,8 +589,8 @@ c compute mean value to use as def_value
 !    &       num_raw_points_total(dom_i, dom_j)+raw_data(it,jt,1)
 
 !         endif
-         
-!         ! The point is in our domain, so increment the counters.  The 
+
+!         ! The point is in our domain, so increment the counters.  The
           ! value of the raw data point is equal to the category ID for
           ! things like veg-type and soil-type.  For topography, we would
           ! have to have additional arrays to keep the sum of the terrain
@@ -594,13 +599,13 @@ c compute mean value to use as def_value
 
 !        ENDIF
 !       ENDDO
-!       ENDDO 
+!       ENDDO
 
 
 ! Now you can compute percentage of each category like so:
 !     if(ctiletype.eq.'V')then
 !        DO icat = 1, ncat
-!           cat_pct(:,:,icat)=num_raw_points_cat(:,:,icat) / 
+!           cat_pct(:,:,icat)=num_raw_points_cat(:,:,icat) /
 !    &                         num_raw_points_total(:,:)
 !        ENDDO
 !     elseif(ctiletype.eq.'T')then

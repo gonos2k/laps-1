@@ -30,11 +30,21 @@ main                                                     laps_cloud.f
         GET_ISTAT_39 (cloud mask from 3.9u)              get_istat_39.f
         qc_clouds_3d                                     laps_cloud_sub.f
         insert_sat   (add based on IR/3.9u)              insertsat.f
+            get_tb8_fwd                                      "
+                rad_to_temp                              lib/cloud/cvr_to_tb8_effective.f
             correlation                                      "  
             cloud_top                                        "
+                 correct_cldtop_t_rad                        "
+                    temp_to_rad                          lib/cloud/cvr_to_tb8_effective.f
+                        PLNKIV                           lib/goeslib/invers.f
+                        VPLANC                               "
+                    rad_to_temp                          lib/cloud/cvr_to_tb8_effective.f
             correct_cover                                    "
                 get_band8_cover                              "
-            compare_radiation                                "
+                    temp_to_rad                          lib/cloud/cvr_to_tb8_effective.f
+                        PLNKIV                           lib/goeslib/invers.f
+                        VPLANC                               "
+            compare_radiation                            lib/cloud/cvr_to_tb8_effective.f
                 apply_correction                             "
                 cvr_to_tb8_effective                     lib/cloud/cvr_to_tb8_effective.f
         qc_clouds_3d                                     laps_cloud_sub.f

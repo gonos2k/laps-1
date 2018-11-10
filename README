@@ -1537,7 +1537,9 @@ e) perl window_domain_rt.pl -t /data/fxa/laps_template -s /awips/laps \
            http://laps.noaa.gov/software/sat/McArea2NetCDF.tar
 
            Note that the NESDIS ADDE server can also supply worldwide 
-           geosynchronous satellite data.
+           geosynchronous satellite data from this link.
+
+           https://www.ssec.wisc.edu/datacenter/real-time.html
 
            Some tweaking of satellite coordinate and image dimensions may be
            needed when setting up the McIDAS package, as can be seen in the

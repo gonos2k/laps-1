@@ -25,6 +25,8 @@ c
       Integer i4time_cur
       Integer i4time_sys
       Integer istatus
+      integer ishow_timer
+      integer init_timer
       Integer laps_cycle_time
       Integer nav_status
       Integer nchannels
@@ -50,6 +52,9 @@ c
 c
 c ========================== START ==============================
 c 
+      istatus=init_timer()
+      istatus=ishow_timer()
+
       call get_grid_dim_xy(nx_l,ny_l,istatus)
       if(istatus.ne.1)then
          print*,'Error returned from get_config'
