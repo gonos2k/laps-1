@@ -906,11 +906,14 @@ C READ IN SATELLITE DATA
         enddo
         enddo
 
-        idb = (NX_L/2) + 1
-        jdb = (NY_L/2) + 1
+        idb = 488 ! (NX_L/2) + 1
+        jdb = 225 ! (NY_L/2) + 1
 
-        icen = NX_L/2
-        jcen = NY_L/2
+        icen = idb
+        jcen = jdb
+
+        write(6,*)' CTR idb/jdb = ',idb,jdb
+
         write(6,*)'solar dec/ha ',solar_dec,solar_ha(icen,jcen),
      1            ' at lat/lon ',lat(icen,jcen),lon(icen,jcen)
         write(6,*)'solar altitude = ',solar_alt(icen,jcen)
@@ -1645,6 +1648,7 @@ C       EW SLICES
                 if(i .eq. idb .AND. j .eq. jdb)then
                     write(6,*)'tb8_offset',i,j,ioff,joff
                     write(6,*)'CTR cloud albedo',cloud_albedo(i,j)
+                    write(6,*)'CTR sat albedo  ',sat_albedo(i,j)
                 endif
             enddo ! j
             enddo ! i
