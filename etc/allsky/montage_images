@@ -37,7 +37,7 @@ setenv ALSDIR $LAPS_DATA_ROOT/lapsprd/www/anal2d/archive/als/$SITE/polar
 echo "make polar montage for $SITE..."
 pwd
 mkdir -p output4
-if (-e output3/$LAPS_A13TIME\_$SITE.png) then
+if (-e $ALSDIR/$LAPS_A9TIME.png && -e output3/$LAPS_A13TIME\_$SITE.png) then
     echo "montage $ALSDIR/$LAPS_A9TIME.png output3/$LAPS_A13TIME\_$SITE.png -mode concatenate output4/combined_$LAPS_A9TIME.png"
           montage $ALSDIR/$LAPS_A9TIME.png output3/$LAPS_A13TIME\_$SITE.png -mode concatenate output4/combined_$LAPS_A9TIME.png
 
@@ -50,7 +50,8 @@ if (-e output3/$LAPS_A13TIME\_$SITE.png) then
     cp output4b/$LATEST_DATA\_blink.gif /w3/lapb/allsky/blink_comparison.gif
 
 else
-    echo "WARNING: output3/$LAPS_A13TIME\_$SITE.png is not present - skipping polar montage..."
+    echo "WARNING: $ALSDIR/$LAPS_A9TIME.png or output3/$LAPS_A13TIME\_$SITE.png is not present - skipping polar montage..."
+    ls -l $ALSDIR/$LAPS_A9TIME.png output3/$LAPS_A13TIME\_$SITE.png
 #   exit
 
 endif
@@ -62,7 +63,7 @@ setenv ALSDIR $LAPS_DATA_ROOT/lapsprd/www/anal2d/archive/als/$SITE/cyl
 echo "make cyl montage for $SITE..."
 pwd
 mkdir -p output4c
-if (-e output3c/$LAPS_A13TIME\_$SITE.png) then
+if (-e $ALSDIR/$LAPS_A9TIME.png && -e output3c/$LAPS_A13TIME\_$SITE.png) then
 
     echo "montage $ALSDIR/$LAPS_A9TIME.png output3c/$LAPS_A13TIME\_$SITE.png -mode concatenate -tile 1x -background gray40 -border 1 output4c/combined_$LAPS_A9TIME.png"
           montage $ALSDIR/$LAPS_A9TIME.png output3c/$LAPS_A13TIME\_$SITE.png -mode concatenate -tile 1x -background gray40 -border 1 output4c/combined_$LAPS_A9TIME.png
@@ -82,7 +83,8 @@ if (-e output3c/$LAPS_A13TIME\_$SITE.png) then
     endif
 
 else
-    echo "WARNING: output3c/$LAPS_A13TIME\_$SITE.png is not present - skipping cyl montage..."
+    echo "WARNING: $ALSDIR/$LAPS_A9TIME.png or output3c/$LAPS_A13TIME\_$SITE.png is not present - skipping cyl montage..."
+    ls -l $ALSDIR/$LAPS_A9TIME.png output3c/$LAPS_A13TIME\_$SITE.png
 #   exit
 
 endif
