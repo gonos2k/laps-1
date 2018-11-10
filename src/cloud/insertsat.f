@@ -409,7 +409,7 @@ c
               t_gnd_c = k_to_c(t_gnd_k(i,j))
               write(6,111,err=112)i,j,tb8_c,t_gnd_c
      1                               ,tb8_c-t_gnd_c
-111           format(1x,2i4,' 1st cloud_top call: tb8/sfc'
+111           format(1x,2i4,' CTR 1st cloud_top call: tb8/sfc'
      1              ,12x,f8.1,4x,f8.1,8x,f8.1)
 112         endif
 
@@ -482,6 +482,21 @@ c
         do j=1,jmax
         do i=1,imax
 
+!             Testing this earlier calculation of it/jt
+              if(mode_prlx .eq. 3)then
+                  cldht_prlx = cldht_prlx_top(i,j)
+              elseif(mode_prlx .eq. 2)then
+                  cldht_prlx = cldht_prlx_fixed
+              else
+                  cldht_prlx = cld_hts(k)
+              endif 
+                  
+              it = i - nint(di_dh_ir(i,j)*cldht_prlx)
+              jt = j - nint(dj_dh_ir(i,j)*cldht_prlx)
+              it = max(min(it,imax),1)
+              jt = max(min(jt,jmax),1)
+
+
          jp10 = j+10
 !        if(j .eq. (j/jskd)*jskd .and. i .eq. (i/iskd)*iskd)then
          if(i .eq. idb .AND. j .eq. jdb)then
@@ -498,18 +513,18 @@ c
              l_poss_extrap = .false.
          endif
 
-         if(tb8_k(i,j) .ne. r_missing_data)then
+         if(tb8_k(it,jt) .ne. r_missing_data)then
 
 !         Compare brightness temp to surface temperature
           if(idebug .eq. 1)then
-              tb8_c = k_to_c(tb8_k(i,j))
+              tb8_c = k_to_c(tb8_k(it,jt))
               t_gnd_c = k_to_c(t_gnd_k(i,j))
               write(6,111,err=1131)i,j,tb8_c,t_gnd_c
      1                                ,tb8_c-t_gnd_c
 1131      endif
 
 !         Calculate cloud top height from Band 8 and/or CO2 slicing method
-          call cloud_top( init_co2,i4time,tb8_k(i,j),idebug
+          call cloud_top( init_co2,i4time,tb8_k(it,jt),idebug
      1     ,cloud_frac_co2_a(i,j)                                        ! I
      1     ,t_gnd_k,sfc_albedo,pres_sfc_pa
      1     ,thresh_ir_diff1,topo(i,j),r_missing_data
@@ -534,7 +549,7 @@ c
      1                       ,l_cloud_present
      1                       ,cldtop_m(i,j),cldtop_tb8_m(i,j)
      1                       ,cloud_frac_vis_a(i,j)
-     1                       ,tb8_k(i,j),t_gnd_k(i,j)
+     1                       ,tb8_k(it,jt),t_gnd_k(i,j)
  113              format(' Vis potl added ',2i5,i2,2l2,5e10.3)
               endif
           endif
@@ -552,7 +567,7 @@ c
                   write(6,114)i,j,istat_39_add_a(i,j),l_tb8
      1                       ,l_cloud_present
      1                       ,cldtop_m(i,j),cldtop_tb8_m(i,j)
-     1                       ,tb8_k(i,j),t_gnd_k(i,j)
+     1                       ,tb8_k(it,jt),t_gnd_k(i,j)
  114              format(' 3.9u potl added ',2i5,i2,2l2,4e10.3)
               endif
           endif
@@ -712,8 +727,8 @@ c
 !               Test if clouds analyzed by SAO/PIREP should have been
 !               detected by the satellite (sat tb8 may countermand previous analysis)
                 iclr = 0
-                if(tb8_k(i,j) - tb8_calculated .gt. thresh_tb8_clr
-     1         .OR.tb8_k(i,j) - t_gnd_k(i,j)   .gt. thresh_tb8_clr2
+                if(tb8_k(it,tj) - tb8_calculated .gt. thresh_tb8_clr
+     1         .OR.tb8_k(it,jt) - t_gnd_k(i,j)   .gt. thresh_tb8_clr2
      1                                                             )then ! Sat warmer than calc
 
 !                 Only touch points above surface buffer    
@@ -725,14 +740,14 @@ c
                       iclr = 1
                     else ! .false.
 !                     Does satellite still imply at least some cloud?
-                      if(tb8_k(i,j) - t_gnd_k(i,j)  .lt. -8.0)then ! Some cloud
+                      if(tb8_k(it,jt) - t_gnd_k(i,j)  .lt. -8.0)then ! Some cloud
                         if(cldcv(it,jt,k) .gt. 0.9)then ! Lower top of solid cld
                             cldcv(itn:itx,jtn:jtx,k)=default_clear_cover
                             iclr = 2
                         else                          ! Cover < 0.9, correct it
-                            call get_band8_cover(tb8_k(i,j),t_gnd_k(i,j)       
-     1                                          ,temp_grid_point,idebug
-     1                                          ,cldcv(it,jt,k),istatus)
+                            call get_band8_cover(tb8_k(it,jt)      
+     1                                   ,t_gnd_k(i,j),temp_grid_point
+     1                                   ,idebug,cldcv(it,jt,k),istatus)
                             if(cldcv(it,jt,k) .gt. 1.0 .or.
      1                         cldcv(it,jt,k) .lt. 0.0       )then
                                 write(6,*)' ERROR--cover out of bounds'
@@ -758,8 +773,8 @@ c
 
                 if(idebug .ge. 1)then
                   write(6,141)i,j,k,t_gnd_k(i,j)
-     1                       ,tb8_k(i,j),tb8_calculated
-     1                       ,tb8_k(i,j)-tb8_calculated,thresh_tb8_clr
+     1                       ,tb8_k(it,jt),tb8_calculated
+     1                       ,tb8_k(it,jt)-tb8_calculated,thresh_tb8_clr
      1                       ,cvr_snow(i,j),iclr
  141              format(' Clr: ijk/gnd/tb8/calc/diff/thr/sncv/iclr = ' 
      1                  ,3i4,6f8.2,i2)
@@ -898,7 +913,7 @@ c
               cover=sat_cover
               htbase = ht_sao_base
 
-              if(tb8_k(i,j) - t_gnd_k(i,j) .lt. -thresh_ir_diff2)then 
+              if(tb8_k(it,jt) - t_gnd_k(i,j) .lt. -thresh_ir_diff2)then 
                   buffer = 2100.             ! We more likely have a cloud
               else                            
                   buffer = surface_ir_buffer ! Weed out IR tops w/higher buffer
@@ -915,14 +930,15 @@ c
               cldtop_m_avg = cldtop_m(i,j)
 
 !             Compare brightness temp to surface temperature
+              if(it .eq. idb .and. jt .eq. jdb)idebug = 1
               if(idebug .eq. 1)then
-                  write(6,206,err=207)i,j,k_to_c(tb8_cold_k(i,j))
+                 write(6,206,err=207)i,j,it,jt,k_to_c(tb8_cold_k(it,jt))        
      1                                   ,k_to_c(t_gnd_k(i,j))
-206               format(1x,2i4,' 2nd cloud_top call: tb8_cold/sfc'
+206              format(1x,4i4,' CTR 2nd cloud_top call: tb8_cold/sfc'
      1                         ,6x,f8.1,8x,f8.1)
 207           endif
 
-              call cloud_top(init_co2,i4time,tb8_cold_k(i,j),idebug
+              call cloud_top(init_co2,i4time,tb8_cold_k(it,jt),idebug
      1            ,cloud_frac_co2_a(i,j)                                ! I
      1            ,t_gnd_k,sfc_albedo,pres_sfc_pa
      1            ,thresh_ir_diff1,topo(i,j),r_missing_data
@@ -943,8 +959,8 @@ c
 
 !             Calculate the cover (opacity) given the brightness temperature,
 !             ground temperature, and assumed ambient cloud-top temperature.
-              call get_band8_cover(tb8_k(i,j),t_gnd_k(i,j)
-     1                            ,tb8_cold_k(i,j),idebug,cover,istatus)       
+              call get_band8_cover(tb8_k(it,jt),t_gnd_k(i,j)
+     1                          ,tb8_cold_k(it,jt),idebug,cover,istatus)       
               if(istatus .ne. 1)write(6,*)' Bad band8_cover status #1'      
               thk_lyr = cld_thk(cldtop_m(i,j))
               htbase = max( topo(i,j) + buffer , cldtop_m(i,j)-thk_lyr )
@@ -956,7 +972,7 @@ c
 
               if(idebug .eq. 1)then
                   write(6,211,err=212)i,j,mode_sao
-     1                               ,tb8_k(i,j),tb8_cold_k(i,j)
+     1                               ,tb8_k(it,jt),tb8_cold_k(it,jt)
      1                               ,cldtop_m_avg,cldtop_m(i,j)
 !       1                            ,cldtop_m_avg,cldtop_m_cold
      1                               ,cover
@@ -985,7 +1001,7 @@ c
 
                   call correct_cover(cover,cover_new,cldtop_old
      1                              ,cldtop_m(i,j)
-     1                              ,temp_3d,tb8_k(i,j),t_gnd_k(i,j)
+     1                              ,temp_3d,tb8_k(it,jt),t_gnd_k(i,j)
      1                              ,heights_3d
      1                              ,imax,jmax,klaps,i,j,idebug,istatus)       
                   if(istatus .ne. 1)then
@@ -1026,7 +1042,7 @@ c
 
                   call correct_cover(cover,cover_new,cldtop_old
      1                              ,cldtop_m(i,j)
-     1                              ,temp_3d,tb8_k(i,j),t_gnd_k(i,j)
+     1                              ,temp_3d,tb8_k(it,jt),t_gnd_k(i,j)
      1                              ,heights_3d
      1                              ,imax,jmax,klaps,i,j,idebug,istatus)       
                   if(istatus .ne. 1)then
@@ -1217,7 +1233,7 @@ c
 
           ENDIF ! l_cloud_present (Cloudy) & l_add_ir
 
-         endif ! tb8_k(i,j) .ne. r_missing_data
+         endif ! tb8_k(it,jt) .ne. r_missing_data
 
         enddo ! imax
         enddo ! jmax
