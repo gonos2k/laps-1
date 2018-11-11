@@ -727,7 +727,7 @@ c
 !               Test if clouds analyzed by SAO/PIREP should have been
 !               detected by the satellite (sat tb8 may countermand previous analysis)
                 iclr = 0
-                if(tb8_k(it,tj) - tb8_calculated .gt. thresh_tb8_clr
+                if(tb8_k(it,jt) - tb8_calculated .gt. thresh_tb8_clr
      1         .OR.tb8_k(it,jt) - t_gnd_k(i,j)   .gt. thresh_tb8_clr2
      1                                                             )then ! Sat warmer than calc
 
