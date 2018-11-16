@@ -108,7 +108,7 @@ c
       real, allocatable  :: shbg(:,:,:)      !Background humidity (gm/m3)
       real, allocatable  :: uwbg(:,:,:)      !Background u component (m/s)
       real, allocatable  :: vwbg(:,:,:)      !Background v component (m/s)
-      real, allocatable  :: wwbg(:,:,:)      !Background omega (m/s)
+      real, allocatable  :: cwbg(:,:,:)      !Background omega (m/s)
       real plvl_grib(maxbglvl) ! Dimension is maxbglvl in 'degrib_nav' routine
 c
 c *** Intermediate arrays for background data vertically
@@ -119,7 +119,7 @@ c
       real, allocatable :: shvi(:,:,:)
       real, allocatable :: uwvi(:,:,:)
       real, allocatable :: vwvi(:,:,:)
-      real, allocatable :: wwvi(:,:,:)
+      real, allocatable :: cwvi(:,:,:)
       real, allocatable :: prvi(:,:,:) ! Pressure (mb)                 
 
       integer, allocatable :: msgpt(:,:)
@@ -230,7 +230,7 @@ c
      +,nzbg_ht,nzbg_tp,nzbg_sh,nzbg_uv,nzbg_ww,ctype
      +,bgpath,fname_bg,af_bg,fullname,cmodel,bgmodel
      +,prbght,prbgsh,prbguv,prbgww
-     +,htbg,tpbg,uwbg,vwbg,shbg,wwbg
+     +,htbg,tpbg,uwbg,vwbg,shbg,cwbg
      +,htbg_sfc,prbg_sfc,shbg_sfc,tdbg_sfc,tpbg_sfc
      +,t_at_sfc,uwbg_sfc,vwbg_sfc,mslpbg,pcpbg,crefbg,tpwbg,cwatbg,swibg
      +,istatus)
@@ -259,7 +259,7 @@ c
          real  :: shbg(nx_bg,ny_bg,nzbg_sh)
          real  :: uwbg(nx_bg,ny_bg,nzbg_uv)
          real  :: vwbg(nx_bg,ny_bg,nzbg_uv)
-         real  :: wwbg(nx_bg,ny_bg,nzbg_ww)
+         real  :: cwbg(nx_bg,ny_bg,nzbg_ww)
 
          character*4   af_bg
          character*5   ctype
@@ -659,7 +659,7 @@ c             goto900
        allocate (shbg(nx_bg,ny_bg,nzbg_sh))
        allocate (uwbg(nx_bg,ny_bg,nzbg_uv))
        allocate (vwbg(nx_bg,ny_bg,nzbg_uv))
-       allocate (wwbg(nx_bg,ny_bg,nzbg_ww))
+       allocate (cwbg(nx_bg,ny_bg,nzbg_ww))
        allocate (prbght(nx_bg,ny_bg,nzbg_ht))
        allocate (prbguv(nx_bg,ny_bg,nzbg_uv))
        allocate (prbgsh(nx_bg,ny_bg,nzbg_sh))
@@ -687,7 +687,7 @@ c             goto900
      +    ,'lapsb',bgpath,fname_bg(nf),af_bg(nf)
      +    ,fullname,cmodel,bgmodel
      +    ,prbght,prbgsh,prbguv,prbgww
-     +    ,htbg,tpbg,uwbg,vwbg,shbg,wwbg
+     +    ,htbg,tpbg,uwbg,vwbg,shbg,cwbg
      +    ,htbg_sfc,prbg_sfc,shbg_sfc,tdbg_sfc,tpbg_sfc
      +    ,t_at_sfc,uwbg_sfc,vwbg_sfc,mslpbg,pcpbg,crefbg
      +    ,tpwbg,cwatbg,swibg
@@ -718,8 +718,8 @@ c             goto900
        if(.false.)then
            print*,'After read'
            do k=1,nzbg_ww
-              rmaxvv=maxval(wwbg(:,:,k))
-              rminvv=minval(wwbg(:,:,k))
+              rmaxvv=maxval(cwbg(:,:,k))
+              rminvv=minval(cwbg(:,:,k))
               print*,'k Max/Min vv ',k,rmaxvv,rminvv
            enddo
        endif
@@ -778,7 +778,7 @@ c         convert to wfo if necessary
      +               shbg, 
      +               uwbg, 
      +               vwbg, 
-     +               wwbg,
+     +               cwbg,
      +               prbght, 
      +               prbguv, 
      +               prbgsh, 
@@ -884,7 +884,7 @@ c
      .               shvi(nx_bg,ny_bg,nz_laps),   !Specific humidity (kg/kg)
      .               uwvi(nx_bg,ny_bg,nz_laps),   !U-wind (m/s)
      .               vwvi(nx_bg,ny_bg,nz_laps),   !V-wind (m/s)
-     .               wwvi(nx_bg,ny_bg,nz_laps))   !W-wind (pa/s)
+     .               cwvi(nx_bg,ny_bg,nz_laps))   !W-wind (pa/s)
 
            if(.true.)then
 
@@ -944,8 +944,8 @@ c
      .         ,ixmin,ixmax,iymin,iymax
      .         ,nzbg_ht,nzbg_tp,nzbg_sh,nzbg_uv,nzbg_ww
      .         ,pr1d_mb,prbght,prbgsh,prbguv,prbgww
-     .         ,htbg,tpbg,shbg,uwbg,vwbg,wwbg
-     .         ,htvi,tpvi,shvi,uwvi,vwvi,wwvi)
+     .         ,htbg,tpbg,shbg,uwbg,vwbg,cwbg
+     .         ,htvi,tpvi,shvi,uwvi,vwvi,cwvi)
        
              write(6,*)
              write(6,*)' compute tpvi range within LAPS box'
@@ -961,6 +961,14 @@ c
                  write(6,*)' htvi range at level ',k
      1                     ,minval(htvi(ixmin:ixmax,iymin:iymax,k))
      1                     ,maxval(htvi(ixmin:ixmax,iymin:iymax,k))   
+             enddo ! k
+       
+             write(6,*)
+             write(6,*)' compute cwvi range within LAPS box'
+             do k = 1,nz_laps
+                 write(6,*)' cwvi range at level ',k
+     1                     ,minval(cwvi(ixmin:ixmax,iymin:iymax,k))
+     1                     ,maxval(cwvi(ixmin:ixmax,iymin:iymax,k))   
              enddo ! k
 
            elseif(vertical_grid .eq. 'SIGMA_P')then
@@ -979,8 +987,8 @@ c
      .         ,ixmin,ixmax,iymin,iymax
      .         ,nzbg_ht,nzbg_tp,nzbg_sh,nzbg_uv,nzbg_ww
      .         ,prvi,prbght,prbgsh,prbguv,prbgww
-     .         ,htbg,tpbg,shbg,uwbg,vwbg,wwbg
-     .         ,htvi,tpvi,shvi,uwvi,vwvi,wwvi)
+     .         ,htbg,tpbg,shbg,uwbg,vwbg,cwbg
+     .         ,htvi,tpvi,shvi,uwvi,vwvi,cwvi)
 
            elseif(vertical_grid .eq. 'SIGMA_HT')then
              allocate(prvi(nx_bg,ny_bg,nz_laps))
@@ -1028,8 +1036,8 @@ c
              call vinterp_ht(nz_laps,nx_bg,ny_bg
      .         ,nzbg_ht,nzbg_tp,nzbg_sh,nzbg_uv,nzbg_ww
      .         ,htvi,prbght,prbgsh,prbguv,prbgww 
-     .         ,htbg,tpbg,shbg,uwbg,vwbg,wwbg
-     .         ,prvi,tpvi,shvi,uwvi,vwvi,wwvi) 
+     .         ,htbg,tpbg,shbg,uwbg,vwbg,cwbg
+     .         ,prvi,tpvi,shvi,uwvi,vwvi,cwvi) 
 
              write(6,*)
              do k = 1,nz_laps
@@ -1053,7 +1061,7 @@ c
            print*,' Vinterp elapsed time (sec): ',itstatus(2)
      1                                           -itstatus(1)
 
-           deallocate (htbg, tpbg, shbg, uwbg, vwbg, wwbg
+           deallocate (htbg, tpbg, shbg, uwbg, vwbg, cwbg
      +,prbght, prbguv, prbgsh, prbgww )
 
 c
@@ -1135,8 +1143,8 @@ c
              call filter_2dx(uwvi,nx_bg,ny_bg,nz_laps,-0.5)
              call filter_2dx(vwvi,nx_bg,ny_bg,nz_laps, 0.5)
              call filter_2dx(vwvi,nx_bg,ny_bg,nz_laps,-0.5)
-             call filter_2dx(wwvi,nx_bg,ny_bg,nz_laps, 0.5)
-             call filter_2dx(wwvi,nx_bg,ny_bg,nz_laps,-0.5)
+             call filter_2dx(cwvi,nx_bg,ny_bg,nz_laps, 0.5)
+             call filter_2dx(cwvi,nx_bg,ny_bg,nz_laps,-0.5)
            endif
 c
            if (bgmodel .eq. 4) then
@@ -1258,7 +1266,7 @@ c
 
            if(.not. lgb_only)then ! skip ww for sfc only option
                 call hinterp_field_3d(nx_bg,ny_bg,
-     .             nx_laps,ny_laps,nz_laps,grx,gry,wwvi,ww,wrapped)
+     .             nx_laps,ny_laps,nz_laps,grx,gry,cwvi,ww,wrapped)
            endif
           
            itstatus(3)=ishow_timer()
@@ -1273,7 +1281,7 @@ c
      .                shvi,   !Specific humidity (kg/kg)
      .                uwvi,   !U-wind (m/s)
      .                vwvi,   !V-wind (m/s)
-     .                wwvi,   !W-wind (pa/s)
+     .                cwvi,   !W-wind (pa/s)
      .                msgpt)
         
            if(vertical_grid .eq. 'SIGMA_HT' .or. 
@@ -1704,7 +1712,7 @@ c this is a grid compatible fua file
           sh=shbg
           uw=uwbg
           vw=vwbg
-          ww=wwbg
+          ww=cwbg
           pr_sfc=prbg_sfc
           mslp=mslpbg
 c         td_sfc=tdbg_sfc
@@ -1749,7 +1757,7 @@ c
 
           endif !(cmodel .eq. 'LAPS_FUA')
 
-          deallocate (htbg, tpbg, shbg, uwbg, vwbg, wwbg
+          deallocate (htbg, tpbg, shbg, uwbg, vwbg, cwbg
      +        ,prbght, prbguv, prbgsh, prbgww )
           deallocate (htbg_sfc,prbg_sfc,shbg_sfc,uwbg_sfc
      +        ,vwbg_sfc,tdbg_sfc, tpbg_sfc, t_at_sfc, mslpbg, pcpbg
