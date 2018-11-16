@@ -3,7 +3,7 @@
      .  ixmin,ixmax,iymin,iymax,
      .	nzbg_ht,nzbg_tp,nzbg_sh,nzbg_uv,nzbg_ww,
      .  prlaps, prbght,prbgsh,prbguv,prbgww,
-     .  htbg,tpbg,shbg,uwbg,vwbg,wwbg,
+     .  htbg,tpbg,shbg,uwbg,vwbg,cwbg,
      .  htvi,tpvi,shvi,uwvi,vwvi,wwvi)
 c
       implicit none
@@ -41,7 +41,7 @@ c
      .       shbg(nx,ny,nzbg_sh),     !specific humidity (kg/kg)
      .       uwbg(nx,ny,nzbg_uv),     !u-wind (m/s)
      .       vwbg(nx,ny,nzbg_uv),     !v-wind (m/s)
-     .       wwbg(nx,ny,nzbg_ww)      !w-wind (omega [pa/s])
+     .       cwbg(nx,ny,nzbg_ww)      !w-wind (omega [pa/s])
 
 c
 c *** Output vertically interpolated variables.
@@ -293,7 +293,7 @@ c
      .                     ,prlaps,prbguv,vwbg,vwvi)
       call vinterp_sub(missingflag,nx,ny,nx_pr,ny_pr
      .                     ,ixmin,ixmax,iymin,iymax,nz_laps,nzbgww
-     .                     ,prlaps,prbgww,wwbg,wwvi)
+     .                     ,prlaps,prbgww,cwbg,wwvi)
 
       return
       end
