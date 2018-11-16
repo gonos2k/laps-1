@@ -752,7 +752,7 @@
             write(6,*)' range of clear_radf_c(2) is ',minval(clear_radf_c(2,:,:)),maxval(clear_radf_c(2,:,:))
             write(6,*)' range of clear_rad_c(2) is ',minval(clear_rad_c(2,:,:)),maxval(clear_rad_c(2,:,:))
             write(6,*)' range of clear_rad_2nd_c(2) is ',minval(clear_rad_2nd_c(2,:,:)),maxval(clear_rad_2nd_c(2,:,:))
-            if(alt_a(maxalt,1) .eq. 90.)then
+            if(alt_a(ni,1) .eq. 90.)then
                 write(6,*)' zenith clear_rad_c(2)     is ',clear_rad_c(2,ni,1),clear_rad_c(2,ni,1)/day_int0
                 write(6,*)' zenith clear_rad_2nd_c(2) is ',clear_rad_2nd_c(2,ni,1),clear_rad_2nd_c(2,ni,1)/day_int0
             endif
