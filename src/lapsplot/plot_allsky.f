@@ -1882,7 +1882,7 @@
                   rotz = 0.
                 endif
 
-                if(alt_scale .lt. .005)then ! HIGHFLAT regional model
+                if(alt_scale .lt. .005 .and. alt_scale .gt. .001)then ! HIGHFLAT regional model
                   pomag = pomag * 5.
                 endif                
 
