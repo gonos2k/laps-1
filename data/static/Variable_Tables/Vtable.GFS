@@ -6,6 +6,7 @@ Param| Type |Level1|Level2| Name     | Units   | Description                    
   52 | 100  |   *  |      | RH       | %       | Relative Humidity                       |  0  |  1  |  1  | 100 |
   33 | 100  |   *  |      | UU       | m s-1   | U                                       |  0  |  2  |  2  | 100 |
   34 | 100  |   *  |      | VV       | m s-1   | V                                       |  0  |  2  |  3  | 100 |
+ 153 | 100  |   *  |      | CLWMR    | kg kg-1 | Cloud water mixing ratio                |  0  |  1  | 22  | 100 |
   39 | 100  |   *  |      | VVEL     | Pa s-1  | Press Vertical Vel                      |  0  |  2  |  8  | 100 |
    2 | 102  |   0  |      | PMSL     | Pa      | Sea-level Pressure                      |  0  |  3  |  1  | 101 |
    1 |   1  |   0  |      | PSFC     | Pa      | Surface Pressure                        |  0  |  3  |  0  |   1 |
