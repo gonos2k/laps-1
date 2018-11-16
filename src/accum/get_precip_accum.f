@@ -115,6 +115,10 @@
      1              ,ilaps_cycle_time
         endif
 
+!       Derive snow accum from overall precip accum field
+!       call get_tcol_max(i4time_radar,i4_tol,imax,jmax,kmax,        ! I
+!    1                             temp_col_max,istatus)             ! O
+
         return
         end
 
@@ -970,3 +974,108 @@
         istatus = 1
         return
         end
+
+        subroutine get_tcol_max(i4time_radar,i4_tol,imax,jmax,kmax,  ! I
+     1                          temp_col_max,istatus)                ! O
+
+        real t_sfc_k(imax,jmax)
+        real pres_sfc_pa(imax,jmax)
+        real temp_3d(imax,jmax,kmax)
+        real temp_col_max(imax,jmax)
+
+        character*3 var_2d
+        character*3 ext_local
+        character*31  ext
+        character*10  units_2d
+        character*125 comment_2d
+
+!       Read in surface data that is time matched to the radar data
+        write(6,*)
+        write(6,*)' Updating Surface and 3D Temp Information'
+
+!       Read in surface temp data
+        var_2d = 'T'
+        ext = 'lsx'
+        call get_laps_2dgrid(i4time_radar,i4_tol,i4time_temp
+     1                      ,ext,var_2d,units_2d,comment_2d
+     1                      ,imax,jmax,t_sfc_k,0,istatus)
+        if(istatus .ne. 1)then
+            write(6,'(" Warning: LAPS Sfc Temperature not available")')     
+            frac_sum = -1.0 ! Turns off the wait loop for more radar
+            return
+        endif
+
+!       Read in surface dewpoint data
+        var_2d = 'TD'
+        ext = 'lsx'
+        call get_laps_2d(i4time_temp,ext,var_2d
+     1        ,units_2d,comment_2d,imax,jmax,td_sfc_k,istatus)
+        if(istatus .ne. 1)then
+            write(6,'(" Warning: LAPS Sfc Dewpoint not available")')     
+            frac_sum = -1.0 ! Turns off the wait loop for more radar
+            return
+        endif
+
+!       Read in surface pressure data
+        var_2d = 'PS'
+        ext = 'lsx'
+        call get_laps_2d(i4time_temp,ext,var_2d
+     1             ,units_2d,comment_2d,imax,jmax,pres_sfc_pa,istatus)
+        if(istatus .ne. 1)then
+            write(6,'(" Warning: LAPS Sfc Pressure not available"
+     1                ,i3)')istatus      
+            frac_sum = -1.0 ! Turns off the wait loop for more radar
+            write(6,*)' range of pres_sfc_pa'
+     1                ,minval(pres_sfc_pa),maxval(pres_sfc_pa)
+            do i = 1,imax
+            do j = 1,jmax
+                if(pres_sfc_pa(i,j) .eq. r_missing_data)then      
+                    write(6,'(2i4,f9.3)')i,j,pres_sfc_pa(i,j)
+                endif
+            enddo ! j
+            enddo ! i
+            return
+        endif
+
+        I4_elapsed = ishow_timer()
+
+        write(6,*)' Getting LT1 Height/Temp' 
+        var_2d = 'HT' 
+        ext = 'lt1'
+
+        call get_laps_3d(i4time_temp
+     1                  ,imax,jmax,kmax,ext,var_2d
+     1                  ,units_2d,comment_2d,height_3d,istatus)
+        if(istatus .ne. 1)then
+            write(6,*)' Warning: LAPS 3D Height not available'       
+            frac_sum = -1.0 ! Turns off the wait loop for more radar
+            return
+        endif
+
+        var_2d = 'T3' 
+        ext = 'lt1'
+
+        call get_laps_3d(i4time_temp
+     1                  ,imax,jmax,kmax,ext,var_2d
+     1                  ,units_2d,comment_2d,temp_3d,istatus)
+        if(istatus .ne. 1)then
+            write(6,*)' Warning: LAPS 3D Temp not available'       
+            frac_sum = -1.0 ! Turns off the wait loop for more radar
+            return
+        endif
+
+!       Calculate column max temperatures
+        do j = 1,jmax
+        do i = 1,imax
+            temp_col_max(i,j) = t_sfc_k(i,j)
+            k_sfc = int(zcoord_of_pressure(pres_sfc_pa(i,j)))
+            do k = k_sfc+1,kmax
+                temp_col_max(i,j) =
+     1                  max(temp_col_max(i,j),temp_3d(i,j,k))
+            enddo ! k
+        enddo ! i
+        enddo ! j
+
+        return
+        end
+                
