@@ -273,7 +273,7 @@ end subroutine output
 
 
 subroutine get_lapsbg(nlvl, maxlvl, plvl, debug_level, nx, ny, nz&
-         ,prbght, htbg, tpbg, shbg, uwbg, vwbg, wwbg, htbg_sfc, tpbg_sfc, shbg_sfc& 
+         ,prbght, htbg, tpbg, shbg, uwbg, vwbg, cwbg, htbg_sfc, tpbg_sfc, shbg_sfc& 
          ,uwbg_sfc, vwbg_sfc, tdbg_sfc, t_at_sfc, prbg_sfc, mslpbg, pcpbg, crefbg, pwatbg, cwatbg, istatus)
 !                                                                             !
 !*****************************************************************************!
@@ -343,7 +343,7 @@ subroutine get_lapsbg(nlvl, maxlvl, plvl, debug_level, nx, ny, nz&
      real :: shbg(nx,ny,nz)
      real :: uwbg(nx,ny,nz)
      real :: vwbg(nx,ny,nz)
-     real :: wwbg(nx,ny,nz)
+     real :: cwbg(nx,ny,nz)
 
      include 'constants.inc' ! for grav
 
@@ -397,7 +397,11 @@ subroutine get_lapsbg(nlvl, maxlvl, plvl, debug_level, nx, ny, nz&
                  if(idx .le. 0)write(6,*)' ERROR: 2d data with 3d variable name ',trim(field)
                  htbg(:,:,idx) = scr2d / grav
               elseif (field.eq.'TT') then
-                 if(idx .le. 0)write(6,*)' ERROR: 2d data with 3d variable name ',trim(field)
+                 if(idx .le. 0)then
+                     write(6,*)' ERROR: 2d data with 3d variable name ',trim(field)
+                 else
+                     write(6,'(" Filling this level / field / range",i4," ",a,2e14.7)')idx,trim(field),minval(scr2d),maxval(scr2d)
+                 endif
                  tpbg(:,:,idx) = scr2d
               elseif (field.eq.'RH') then
                  if(idx .le. 0)write(6,*)' ERROR: 2d data with 3d variable name ',trim(field)
@@ -408,9 +412,13 @@ subroutine get_lapsbg(nlvl, maxlvl, plvl, debug_level, nx, ny, nz&
               elseif (field.eq.'VV') then
                  if(idx .le. 0)write(6,*)' ERROR: 2d data with 3d variable name ',trim(field)
                  vwbg(:,:,idx) = scr2d
-              elseif (field.eq.'VVEL') then
-                 if(idx .le. 0)write(6,*)' ERROR: 2d data with 3d variable name ',trim(field)
-                 wwbg(:,:,idx) = scr2d
+              elseif (field.eq.'CLWMR') then
+                 if(idx .le. 0)then
+                     write(6,*)' ERROR: 2d data with 3d variable name ',trim(field)
+                 else
+                     write(6,'(" Filling this level / field / range",i4," ",a,2e14.7)')idx,trim(field),minval(scr2d),maxval(scr2d)
+                 endif
+                 cwbg(:,:,idx) = scr2d
               elseif (field.eq.'HGT_SFC') then
                  htbg_sfc = scr2d
               elseif (field.eq.'GEOPT_SFC') then
@@ -507,9 +515,9 @@ subroutine get_lapsbg(nlvl, maxlvl, plvl, debug_level, nx, ny, nz&
 
 !----------
 
-!     write(*, *) "OUTPUT htbg(3,30,1)", htbg(3,30,1)
-!     write(*, *) "OUTPUT tpbg(3,30,1)", tpbg(3,30,1)
-!     write(*, *) "OUTPUT wwbg(3,30,1)", wwbg(3,30,1)
+      write(*, *) "OUTPUT htbg(3,30,6)", htbg(3,30,6)
+      write(*, *) "OUTPUT tpbg(3,30,6)", tpbg(3,30,6)
+      write(*, *) "OUTPUT cwbg(3,30,6)", cwbg(3,30,6)
 !     write(*, *) "OUTPUT tdbg_sfc(3,30)", tdbg_sfc(3,30)
 !     write(*, *) "OUTPUT shbg_sfc(3,30)", shbg_sfc(3,30)
 !     do jj = 1, 6 
