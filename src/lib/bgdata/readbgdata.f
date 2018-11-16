@@ -2,7 +2,7 @@
      +	   nzbg_ht,nzbg_tp,nzbg_sh,nzbg_uv,nzbg_ww,ctype
      +    ,bgpath,fname_bg,af_bg,fullname,cmodel,bgmodel
      +    ,prbght,prbgsh,prbguv,prbgww
-     +    ,htbg, tpbg,uwbg,vwbg,shbg,wwbg
+     +    ,htbg, tpbg,uwbg,vwbg,shbg,cwbg
      +    ,htbg_sfc,prbg_sfc,shbg_sfc,tdbg_sfc,tpbg_sfc
      +    ,t_at_sfc,uwbg_sfc,vwbg_sfc,mslpbg,pcpbg,crefbg,tpw,cwat,swi
      +    ,istatus)
@@ -52,7 +52,7 @@ c
       real :: shbg(nx_bg,ny_bg,nzbg_sh)   !Specific humidity (kg/kg)
       real :: uwbg(nx_bg,ny_bg,nzbg_uv)   !U-wind (m/s)
       real :: vwbg(nx_bg,ny_bg,nzbg_uv)   !V-wind (m/s)
-      real :: wwbg(nx_bg,ny_bg,nzbg_ww)   !W-wind (pa/s)
+      real :: cwbg(nx_bg,ny_bg,nzbg_ww)   !W-wind (pa/s)
 
       real :: mslpbg(nx_bg,ny_bg)         !mslp  (mb)
       real :: htbg_sfc(nx_bg,ny_bg)
@@ -125,7 +125,7 @@ c domain fua/fsf but we'll try the get_lapsdata stuff first.
          if(cmodel(1:lencm).eq.'MODEL_FUA')then
             call read_fuafsf_cdf(fullname
      +                          ,nx_bg, ny_bg, nzbg_ht
-     +                          ,htbg, pr, wwbg, shbg, tpbg, uwbg, vwbg       
+     +                          ,htbg, pr, cwbg, shbg, tpbg, uwbg, vwbg       
      +                          ,uwbg_sfc, vwbg_sfc, tpbg_sfc, tdbg_sfc       
      +                          ,prbg_sfc, mslpbg, htbg_sfc, r01, pcpbg
      +                          ,crefbg, llr, s8a, swi, tpw
@@ -246,7 +246,7 @@ c upper air
 
            call get_lapsdata_3d(i4_initial,i4_valid,nx_bg
      1            ,ny_bg,nzbg_ww,directory,'OM '
-     1            ,units_2d,comment_2d,wwbg,istatus)
+     1            ,units_2d,comment_2d,cwbg,istatus)
 
            if(istatus.ne.1)then
               print*,'Error 3D bkgd file (OM): ',directory(1:lend)
@@ -332,7 +332,7 @@ c
          elseif(cmodel.eq.'LAPS')then
 
            call get_laps_3d_analysis_data(i4_initial,nx_bg,ny_bg
-     +,nzbg_ht, htbg,tpbg,uwbg,vwbg,shbg,wwbg,istatus)
+     +,nzbg_ht, htbg,tpbg,uwbg,vwbg,shbg,cwbg,istatus)
 
            call get_laps_2d(i4_initial,'lsx','PS ',units_2d,comment_2d
      +,nx_bg,ny_bg,prbg_sfc,istatus)
@@ -366,7 +366,7 @@ c
 c for now all fields have 3D dimension of nzbg_ht
 c
           call read_eta_conusC(fullname,nx_bg,ny_bg,nzbg_ht
-     .,htbg,prbght,tpbg,uwbg,vwbg,shbg,wwbg
+     .,htbg,prbght,tpbg,uwbg,vwbg,shbg,cwbg
      .,htbg_sfc,prbg_sfc,shbg_sfc,tdbg_sfc,tpbg_sfc
      .,uwbg_sfc,vwbg_sfc,mslpbg,istatus)
 
@@ -383,7 +383,7 @@ c convert rh to sh.
           if(cmodel(1:lencm).eq.'ORSM_HKO')then
              print*,'In read_bgdata'
              print*,'Convert ww to pa/sec for ORSM_HKO'
-             wwbg=wwbg/36.
+             cwbg=cwbg/36.
           endif
 
           prbgsh=prbght
@@ -395,7 +395,7 @@ c
           call read_sbn_grids(fullname,af_bg,cmodel
      .,nx_bg,ny_bg,nzbg_ht,nzbg_tp,nzbg_sh,nzbg_uv,nzbg_ww
      .,prbght,prbgsh,prbguv,prbgww
-     .,htbg,tpbg,shbg,uwbg,vwbg,wwbg
+     .,htbg,tpbg,shbg,uwbg,vwbg,cwbg
      .,htbg_sfc,prbg_sfc,uwbg_sfc,vwbg_sfc,shbg_sfc
      .,tpbg_sfc,mslpbg,ctype,istatus)
 
@@ -418,7 +418,7 @@ c         endif
       elseif (bgmodel .eq. 5) then ! Process 40km RUC public-netcdf data
 
           call read_ruc2_hybb(fullname,nx_bg,ny_bg,nzbg_ht
-     +,mslpbg,htbg,prbght,shbg,uwbg,vwbg,tpbg,wwbg,istatus)
+     +,mslpbg,htbg,prbght,shbg,uwbg,vwbg,tpbg,cwbg,istatus)
 
           if(istatus.ne.0)goto 99 
 
@@ -450,7 +450,7 @@ c
 
              call read_dgprep(bgmodel,cmodel,bgpath
      .,fname_bg,af_bg,nx_bg,ny_bg,nzbg_ht
-     .,prbght,htbg,tpbg,shbg,uwbg,vwbg,wwbg
+     .,prbght,htbg,tpbg,shbg,uwbg,vwbg,cwbg
      .,htbg_sfc,prbg_sfc,shbg_sfc,tpbg_sfc,t_at_sfc
      .,uwbg_sfc,vwbg_sfc,mslpbg,istatus)
 
@@ -479,14 +479,14 @@ C WNI-BLS
           call read_unidata_iso(fullname,af_bg,cmodel
      .   ,nx_bg,ny_bg,nzbg_ht,nzbg_tp,nzbg_sh,nzbg_uv,nzbg_ww
      .   ,prbght,prbgsh,prbguv,prbgww
-     .   ,htbg,tpbg,shbg,uwbg,vwbg,wwbg
+     .   ,htbg,tpbg,shbg,uwbg,vwbg,cwbg
      .   ,htbg_sfc,prbg_sfc,uwbg_sfc,vwbg_sfc,shbg_sfc
      .   ,tpbg_sfc,mslpbg,ctype,istatus)
        elseif(cmodel .EQ. 'RUC_HYB') THEN
            call read_unidata_ruc_hyb(fullname,af_bg,cmodel
      .   ,nx_bg,ny_bg,nzbg_ht,nzbg_tp,nzbg_sh,nzbg_uv,nzbg_ww
      .   ,prbght,prbgsh,prbguv,prbgww
-     .   ,htbg,tpbg,shbg,uwbg,vwbg,wwbg
+     .   ,htbg,tpbg,shbg,uwbg,vwbg,cwbg
      .   ,htbg_sfc,prbg_sfc,uwbg_sfc,vwbg_sfc,shbg_sfc
      .   ,tpbg_sfc,mslpbg,ctype,istatus)
          print *, "Completed read of RUC_HYB"
@@ -498,7 +498,7 @@ C WNI-BLS
          write(*,*) ' grib filename ',trim(fullname)
 
          call degrib_data(fullname, nx_bg, ny_bg, nzbg_ht, 
-     &      prbght, htbg, tpbg, shbg, uwbg, vwbg, wwbg, 
+     &      prbght, htbg, tpbg, shbg, uwbg, vwbg, cwbg, 
      &      htbg_sfc, tpbg_sfc, shbg_sfc, uwbg_sfc, vwbg_sfc, 
      &      tdbg_sfc, t_at_sfc, prbg_sfc, mslpbg, pcpbg, crefbg, 
      &      tpw,cwat,istatus)
@@ -509,7 +509,7 @@ C WNI-BLS
 
 c           write(*, *) "READBGDATA htbg(3,30,1)", htbg(3,30,1)
 c           write(*, *) "READBGDATA tpbg(3,30,1)", tpbg(3,30,1)
-c           write(*, *) "READBGDATA wwbg(3,30,1)", wwbg(3,30,1)
+c           write(*, *) "READBGDATA cwbg(3,30,1)", cwbg(3,30,1)
 c           write(*, *) "READBGDATA: shbg_sfc/tdbg_sfc is actually rh?"
             write(*, *) "READBGDATA shbg_sfc(3,30)", shbg_sfc(3,30)
             write(*, *) "READBGDATA tdbg_sfc(3,30)", tdbg_sfc(3,30)
@@ -561,7 +561,7 @@ c        goto 99
 c        goto 99
       endif
 
-      call check_nan3 (wwbg,nx_bg,ny_bg,nzbg_ww,nan_flag)
+      call check_nan3 (cwbg,nx_bg,ny_bg,nzbg_ww,nan_flag)
       if(nan_flag .ne. 1) then
          print *,' ERROR: NaN found in w-comp array '
       endif
