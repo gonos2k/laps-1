@@ -210,7 +210,7 @@ subroutine degrib_nav(gribflnm, vtablefn, nx, ny, nz, &
 !-------------------------------------------------------------------
 
 subroutine degrib_data(gribflnm, nx, ny, nz, &
-         prbght, htbg, tpbg, shbg, uwbg, vwbg, wwbg, &
+         prbght, htbg, tpbg, shbg, uwbg, vwbg, cwbg, &
          htbg_sfc, tpbg_sfc, shbg_sfc, uwbg_sfc, vwbg_sfc, &
          tdbg_sfc, t_at_sfc, prbg_sfc, mslpbg, pcpbg, crefbg, pwatbg, cwatbg, istatus)
 
@@ -274,7 +274,7 @@ subroutine degrib_data(gribflnm, nx, ny, nz, &
   real :: shbg(nx,ny,nz)
   real :: uwbg(nx,ny,nz)
   real :: vwbg(nx,ny,nz)
-  real :: wwbg(nx,ny,nz)
+  real :: cwbg(nx,ny,nz)
 
   write(6,*)' Start degrib_data: dims are ',nx,ny,nz
 
@@ -372,7 +372,7 @@ subroutine degrib_data(gribflnm, nx, ny, nz, &
 !-----
         write(6,*)' call get_lapsbg: dims are ',nx,ny,nz
         call get_lapsbg(nlvl, maxbglvl, plvl, debug_level, nx, ny, nz, &
-         prbght, htbg, tpbg, shbg, uwbg, vwbg, wwbg, &
+         prbght, htbg, tpbg, shbg, uwbg, vwbg, cwbg, &
          htbg_sfc, tpbg_sfc, shbg_sfc, uwbg_sfc, vwbg_sfc, &
          tdbg_sfc, t_at_sfc, prbg_sfc, mslpbg, pcpbg, crefbg, pwatbg, cwatbg, istatus)
 
@@ -534,6 +534,7 @@ subroutine degrib_data(gribflnm, nx, ny, nz, &
      write(6,*)' shbg_sfc range = ',minval(shbg_sfc),maxval(shbg_sfc)
      write(6,*)' mslpbg   range = ',minval(mslpbg)  ,maxval(mslpbg)
      write(6,*)' pcpbg    range = ',minval(pcpbg)   ,maxval(pcpbg)    
+     write(6,*)' cwbg     range = ',minval(cwbg)    ,maxval(cwbg)     
 
 ! ------------- end convert data ----------------
  
