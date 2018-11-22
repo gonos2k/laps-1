@@ -1,41 +1,3 @@
-cdis   
-cdis    Open Source License/Disclaimer, Forecast Systems Laboratory
-cdis    NOAA/OAR/FSL, 325 Broadway Boulder, CO 80305
-cdis    
-cdis    This software is distributed under the Open Source Definition,
-cdis    which may be found at http://www.opensource.org/osd.html.
-cdis    
-cdis    In particular, redistribution and use in source and binary forms,
-cdis    with or without modification, are permitted provided that the
-cdis    following conditions are met:
-cdis    
-cdis    - Redistributions of source code must retain this notice, this
-cdis    list of conditions and the following disclaimer.
-cdis    
-cdis    - Redistributions in binary form must provide access to this
-cdis    notice, this list of conditions and the following disclaimer, and
-cdis    the underlying source code.
-cdis    
-cdis    - All modifications to this software must be clearly documented,
-cdis    and are solely the responsibility of the agent making the
-cdis    modifications.
-cdis    
-cdis    - If significant modifications or enhancements are made to this
-cdis    software, the FSL Software Policy Manager
-cdis    (softwaremgr@fsl.noaa.gov) should be notified.
-cdis    
-cdis    THIS SOFTWARE AND ITS DOCUMENTATION ARE IN THE PUBLIC DOMAIN
-cdis    AND ARE FURNISHED "AS IS."  THE AUTHORS, THE UNITED STATES
-cdis    GOVERNMENT, ITS INSTRUMENTALITIES, OFFICERS, EMPLOYEES, AND
-cdis    AGENTS MAKE NO WARRANTY, EXPRESS OR IMPLIED, AS TO THE USEFULNESS
-cdis    OF THE SOFTWARE AND DOCUMENTATION FOR ANY PURPOSE.  THEY ASSUME
-cdis    NO RESPONSIBILITY (1) FOR THE USE OF THE SOFTWARE AND
-cdis    DOCUMENTATION; OR (2) TO PROVIDE TECHNICAL SUPPORT TO USERS.
-cdis   
-cdis
-cdis
-cdis   
-cdis
 c
 c
         subroutine insert_sat(i4time,cldcv,
@@ -138,7 +100,7 @@ c
         real topo(imax,jmax)
         real rlaps_land_frac(imax,jmax)
         real cloud_frac_vis_a(imax,jmax)   ! Used for cloud building with vis
-        real cloud_frac_vis_s(imax,jmax)   ! Used for cloud building with vis
+        real cloud_frac_vis_s(imax,jmax)   ! Smoothed cloud_frac_vis_a
         real solar_alt(imax,jmax)
         real solar_ha(imax,jmax)
         real temp_3d(imax,jmax,klaps)
@@ -159,7 +121,9 @@ c
         integer istat_39_a(imax,jmax)
         integer istat_39_add_a(imax,jmax)
         integer istat_vis_potl_a(imax,jmax)  ! Pot'l cloud building with vis
+                                             ! (image space)
         integer istat_vis_added_a(imax,jmax) ! Actual cloud building with vis
+                                             ! (gridpoint space?)
         integer i_fill_seams(imax,jmax)
 
 !       Output
@@ -409,21 +373,21 @@ c
               t_gnd_c = k_to_c(t_gnd_k(i,j))
               write(6,111,err=112)i,j,tb8_c,t_gnd_c
      1                               ,tb8_c-t_gnd_c
-111           format(1x,2i4,' CTR 1st cloud_top call: tb8/sfc'
-     1              ,12x,f8.1,4x,f8.1,8x,f8.1)
+111           format(1x,2i4,' CTR 1st cloud_top call: tb8/sfc/diff'
+     1              ,7x,f8.1,4x,f8.1,8x,f8.1)
 112         endif
 
 !           Calculate cloud top height from Band 8 and/or CO2 slicing method
             call cloud_top( init_co2,i4time,tb8_k(i,j),idebug
      1     ,cloud_frac_co2_a(i,j)                                        ! I
-     1     ,t_gnd_k,sfc_albedo,pres_sfc_pa
+     1     ,t_gnd_k(i,j),sfc_albedo,pres_sfc_pa
      1     ,thresh_ir_diff1,topo(i,j),r_missing_data
      1     ,i,j,imax,jmax,klaps,heights_3d,temp_3d,k_terrain(i,j),laps_p      
      1     ,istat_39_a(i,j), l_use_39                                    ! I
      1     ,istat_39_add_a(i,j),istat_vis_added_a(i,j)                   ! O
-     1     ,cloud_frac_vis_a,istat_vis_potl_a(i,j)                       ! I
+     1     ,cloud_frac_vis_a(i,j),istat_vis_potl_a(i,j)                  ! I
      1     ,di_dh_vis(i,j),dj_dh_vis(i,j)                                ! I
-     1     ,cloud_frac_vis_s                                             ! I
+     1     ,cloud_frac_vis_s(i,j)                                        ! I
      1     ,lstat_co2_a(i,j)                                             ! I
      1     ,t_modelfg,sh_modelfg                                         ! I
      1     ,pres_3d                                                      ! I
@@ -479,23 +443,31 @@ c
              
         endif ! true
 
-        do j=1,jmax
+!       Loop in gridpoint space
+        do j=1,jmax 
         do i=1,imax
 
-!             Testing this earlier calculation of it/jt
-              if(mode_prlx .eq. 3)then
-                  cldht_prlx = cldht_prlx_top(i,j)
-              elseif(mode_prlx .eq. 2)then
-                  cldht_prlx = cldht_prlx_fixed
-              else
-                  cldht_prlx = cld_hts(k)
-              endif 
-                  
-              it = i - nint(di_dh_ir(i,j)*cldht_prlx)
-              jt = j - nint(dj_dh_ir(i,j)*cldht_prlx)
-              it = max(min(it,imax),1)
-              jt = max(min(jt,jmax),1)
+!        Location of satellite cloud tops above grid point
+!        Testing this earlier calculation of it/jt
+         if(mode_prlx .eq. 3)then
+             cldht_prlx = cldht_prlx_top(i,j)
+         elseif(mode_prlx .eq. 2)then
+             cldht_prlx = cldht_prlx_fixed
+         else
+             cldht_prlx = cld_hts(k)
+         endif 
+               
+         it = i + nint(di_dh_ir(i,j)*cldht_prlx)
+         jt = j + nint(dj_dh_ir(i,j)*cldht_prlx)
+         it = max(min(it,imax),1)
+         jt = max(min(jt,jmax),1)
 
+!        Compare to sfc_albedo using parallax and topo?
+!        Find ig,jg given i,j
+         ig = i + nint(di_dh_vis(i,j) * (cldtop_tb8_m(i,j)-topo(i,j)))
+         jg = j + nint(dj_dh_vis(i,j) * (cldtop_tb8_m(i,j)-topo(i,j)))
+         ig = max(min(ig,imax),1)
+         jg = max(min(jg,jmax),1)
 
          jp10 = j+10
 !        if(j .eq. (j/jskd)*jskd .and. i .eq. (i/iskd)*iskd)then
@@ -518,22 +490,25 @@ c
 !         Compare brightness temp to surface temperature
           if(idebug .eq. 1)then
               tb8_c = k_to_c(tb8_k(it,jt))
-              t_gnd_c = k_to_c(t_gnd_k(i,j))
-              write(6,111,err=1131)i,j,tb8_c,t_gnd_c
-     1                                ,tb8_c-t_gnd_c
-1131      endif
+              t_gnd_c = k_to_c(t_gnd_k(ig,jg))
+              write(6,1131,err=1132)i,j,tb8_c,t_gnd_c
+     1                                 ,tb8_c-t_gnd_c
+     1                                 ,istat_vis_potl_a(it,jt)
+1131          format(1x,2i4,' CTR 2nd cloud_top call: tb8/sfc/diff/vs'
+     1              ,7x,f8.1,4x,f8.1,8x,f8.1,i3)
+1132      endif
 
 !         Calculate cloud top height from Band 8 and/or CO2 slicing method
           call cloud_top( init_co2,i4time,tb8_k(it,jt),idebug
      1     ,cloud_frac_co2_a(i,j)                                        ! I
-     1     ,t_gnd_k,sfc_albedo,pres_sfc_pa
-     1     ,thresh_ir_diff1,topo(i,j),r_missing_data
-     1     ,i,j,imax,jmax,klaps,heights_3d,temp_3d,k_terrain(i,j),laps_p      
+     1     ,t_gnd_k(ig,jg),sfc_albedo,pres_sfc_pa                        ! I
+     1     ,thresh_ir_diff1,topo(i,j),r_missing_data                     ! I
+     1     ,i,j,imax,jmax,klaps,heights_3d,temp_3d,k_terrain(i,j),laps_p ! I  
      1     ,istat_39_a(i,j), l_use_39                                    ! I
      1     ,istat_39_add_a(i,j),istat_vis_added_a(i,j)                   ! O
-     1     ,cloud_frac_vis_a,istat_vis_potl_a(i,j)                       ! I
+     1     ,cloud_frac_vis_a(it,jt),istat_vis_potl_a(it,jt)              ! I
      1     ,di_dh_vis(i,j),dj_dh_vis(i,j)                                ! I
-     1     ,cloud_frac_vis_s                                             ! I
+     1     ,cloud_frac_vis_s(it,jt)                                      ! I
      1     ,lstat_co2_a(i,j)                                             ! I
      1     ,t_modelfg,sh_modelfg                                         ! I
      1     ,pres_3d                                                      ! I
@@ -542,17 +517,20 @@ c
      1     ,cldtop_m(i,j),l_cloud_present                                ! O
      1     ,sat_cover)                                                   ! O
 
-          if(istat_vis_potl_a(i,j) .eq. 1)then ! vis potl added
+          if(istat_vis_potl_a(it,jt) .eq. 1)then ! vis potl added
               iwrite = iwrite + 1
               if(idebug .eq. 1)then
                   write(6,113)i,j,istat_vis_added_a(i,j),l_tb8
      1                       ,l_cloud_present
      1                       ,cldtop_m(i,j),cldtop_tb8_m(i,j)
-     1                       ,cloud_frac_vis_a(i,j)
-     1                       ,tb8_k(it,jt),t_gnd_k(i,j)
- 113              format(' Vis potl added ',2i5,i2,2l2,5e10.3)
+     1                       ,cloud_frac_vis_a(it,jt),sat_cover
+     1                       ,tb8_k(it,jt),t_gnd_k(ig,jg)
+ 113              format(' Vis potl added ',2i5,i2,2l2,6e10.3)
               endif
           endif
+
+          if(idebug .eq. 1)write(6,'(" tb8/tgnd check 1 ",2f9.3)')
+     1                     tb8_k(it,jt),t_gnd_k(ig,jg)
 
           if(istat_39_a(i,j) .eq. 1)then ! 3.9u potl added
               iwrite = iwrite + 1
@@ -567,10 +545,13 @@ c
                   write(6,114)i,j,istat_39_add_a(i,j),l_tb8
      1                       ,l_cloud_present
      1                       ,cldtop_m(i,j),cldtop_tb8_m(i,j)
-     1                       ,tb8_k(it,jt),t_gnd_k(i,j)
+     1                       ,tb8_k(it,jt),t_gnd_k(ig,jg)
  114              format(' 3.9u potl added ',2i5,i2,2l2,4e10.3)
               endif
           endif
+
+          if(idebug .eq. 1)write(6,'(" tb8/tgnd check 2 ",2f9.3)')
+     1                     tb8_k(it,jt),t_gnd_k(ig,jg)
 
           if(lstat_co2_a(i,j))then ! Using CO2 slicing method
 
@@ -589,12 +570,18 @@ c
 
           endif
 
+          if(idebug .eq. 1)write(6,'(" tb8/tgnd check 2a ",2f9.3)')
+     1                     tb8_k(it,jt),t_gnd_k(ig,jg)
+
           if(l_clear_ir)then ! Use Band 8 (11.2 mm)
 
 !           Modify (clear) those levels where the satellite shows warmer than
 !           the calculated brightness temp from the analysis of SAO/Pireps
 
             do k=kcld,1,-1
+
+!             if(idebug .eq. 1)write(6,'(" tb8/tgnd check 2b ",2f9.3)')
+!    1                         tb8_k(it,jt),t_gnd_k(ig,jg)
 
               if(mode_prlx .eq. 3)then
                   cldht_prlx = cldht_prlx_top(i,j)
@@ -604,8 +591,8 @@ c
                   cldht_prlx = cld_hts(k)
               endif 
                   
-              it = i - nint(di_dh_ir(i,j)*cldht_prlx)
-              jt = j - nint(dj_dh_ir(i,j)*cldht_prlx)
+              it = i + nint(di_dh_ir(i,j)*cldht_prlx)
+              jt = j + nint(dj_dh_ir(i,j)*cldht_prlx)
               it = max(min(it,imax),1)
               jt = max(min(jt,jmax),1)
               if(i_fill_seams(i,j) .ne. 0)then
@@ -649,8 +636,12 @@ c
                   endif
               endif
 
+!             if(idebug .eq. 1)write(6,'(" tb8/tgnd check 2c ",2f9.3)')
+!    1                         tb8_k(it,jt),t_gnd_k(ig,jg)
+
 !             if(cldcv(it,jt,k) .gt. .04)then ! Efficiency test
-              if(maxval(cldcv(itn:itx,jtn:jtx,k)) .gt. .04)then ! Efficiency test
+!             if(maxval(cldcv(itn:itx,jtn:jtx,k)) .gt. .04)then ! Efficiency test
+              if(       cldcv(i,j,k) .gt. .04)then ! Efficiency test
 
                 z_temp = height_to_zcoord2(cld_hts(k),heights_3d,
      1                                     imax,jmax,klaps,i,j,istatus1)       
@@ -674,23 +665,23 @@ c
                 temp_grid_point = temp_3d(i,j,iz_temp)    * (1. - frac)  
      1                          + temp_3d(i,j,iz_temp+1)  * frac
 
-                if(cldcv(it,jt,k) .ne. r_missing_data)then
-                  if(cldcv(it,jt,k) .gt. 1.070 
+                if(cldcv(i,j,k) .ne. r_missing_data)then
+                  if(cldcv(i,j,k) .gt. 1.070 
      1                    .and. .not. l_poss_extrap)then ! excessively over 1.0
                       write(6,*)
      1                    ' Error in insert_sat, interior cldcv > 1.070'     
-     1                    ,i,j,k,cldcv(it,jt,k)
+     1                    ,i,j,k,cldcv(i,j,k)
                       istatus = 0
                       return
-                  elseif(cldcv(it,jt,k) .gt. 1.0)then ! slightly over 1.0
+                  elseif(cldcv(i,j,k) .gt. 1.0)then ! slightly over 1.0
                       write(6,*)' Warning in insert_sat, cldcv > 1.0'       
-     1                         ,i,j,k,cldcv(it,jt,k)
+     1                         ,i,j,k,cldcv(i,j,k)
                       write(6,*)' Resetting cloud cover to 1.0'
-                      cldcv(itn:itx,jtn:jtx,k) = 1.0
+                      cldcv(i,j,k) = 1.0
                   endif
 
-                  call get_tb8_fwd(temp_grid_point,t_gnd_k(i,j)         ! I   
-     1                            ,cldcv(it,jt,k)                       ! I
+                  call get_tb8_fwd(temp_grid_point,t_gnd_k(ig,jg)       ! I   
+     1                            ,cldcv(i,j,k)                         ! I
      1                            ,tb8_calculated,istatus)              ! O
 
                   if(istatus .ne. 1)then
@@ -700,10 +691,10 @@ c
                       return
                   endif
 
-                  tb8_calculated_test = temp_grid_point * cldcv(it,jt,k)       
-     1                              + t_gnd_k(i,j) * (1.-cldcv(it,jt,k))
+                  tb8_calculated_test = temp_grid_point * cldcv(i,j,k)       
+     1                              + t_gnd_k(ig,jg) * (1.-cldcv(i,j,k))
                 else
-                  tb8_calculated = t_gnd_k(i,j)
+                  tb8_calculated = t_gnd_k(ig,jg)
                 endif
 
 !               Set thresh_tb8 to +8 in snowy situations where more IR clearing
@@ -715,7 +706,7 @@ c
 !                   tb8_calculated = t_gnd_k(i,j)
                     thresh_tb8_clr  = -8. * (cvr_snow(i,j)**0.3)
                     thresh_tb8_clr2 = -8.          
-                elseif(cloud_frac_vis_a(i,j) .eq. r_missing_data)then ! low sun/night
+                elseif(cloud_frac_vis_a(it,jt) .eq. r_missing_data)then ! low sun/night
                     thresh_tb8_clr  = -8.
                     thresh_tb8_clr2 = -8.          
                 else ! no snow case
@@ -724,11 +715,15 @@ c
                     thresh_tb8_clr2 = 99999.
                 endif
 
+!               if(idebug .eq. 1)
+!    1               write(6,'(" tb8/tgnd check 2d ",2f9.3)')
+!    1                           tb8_k(it,jt),t_gnd_k(ig,jg)
+
 !               Test if clouds analyzed by SAO/PIREP should have been
 !               detected by the satellite (sat tb8 may countermand previous analysis)
                 iclr = 0
                 if(tb8_k(it,jt) - tb8_calculated .gt. thresh_tb8_clr
-     1         .OR.tb8_k(it,jt) - t_gnd_k(i,j)   .gt. thresh_tb8_clr2
+     1         .OR.tb8_k(it,jt) - t_gnd_k(ig,jg) .gt. thresh_tb8_clr2
      1                                                             )then ! Sat warmer than calc
 
 !                 Only touch points above surface buffer    
@@ -736,20 +731,20 @@ c
 !                 if(cld_hts(k) - topo(i,j) .gt. 1200.)then
 !                   if(thresh_tb8_clr .gt. 0.)then ! clear clouds when snow present
                     if(.true.)then ! key line for artifacts                                              
-                      cldcv(itn:itx,jtn:jtx,k)=default_clear_cover
+                      cldcv(i,j,k)=default_clear_cover
                       iclr = 1
                     else ! .false.
 !                     Does satellite still imply at least some cloud?
-                      if(tb8_k(it,jt) - t_gnd_k(i,j)  .lt. -8.0)then ! Some cloud
-                        if(cldcv(it,jt,k) .gt. 0.9)then ! Lower top of solid cld
-                            cldcv(itn:itx,jtn:jtx,k)=default_clear_cover
+                      if(tb8_k(it,jt) - t_gnd_k(ig,jg)  .lt. -8.0)then ! Some cloud
+                        if(cldcv(i,j,k) .gt. 0.9)then ! Lower top of solid cld
+                            cldcv(i,j,k)=default_clear_cover
                             iclr = 2
                         else                          ! Cover < 0.9, correct it
                             call get_band8_cover(tb8_k(it,jt)      
-     1                                   ,t_gnd_k(i,j),temp_grid_point
-     1                                   ,idebug,cldcv(it,jt,k),istatus)
-                            if(cldcv(it,jt,k) .gt. 1.0 .or.
-     1                         cldcv(it,jt,k) .lt. 0.0       )then
+     1                                   ,t_gnd_k(ig,jg),temp_grid_point
+     1                                   ,idebug,cldcv(i,j,k),istatus)
+                            if(cldcv(i,j,k) .gt. 1.0 .or.
+     1                         cldcv(i,j,k) .lt. 0.0       )then
                                 write(6,*)' ERROR--cover out of bounds'
                                 istatus = 0
                                 return
@@ -758,11 +753,11 @@ c
                       else ! Band 8 nearly matches ground, clear it
 !                       Ensure that "black (or grey) stratus" is not present
                         temp_thresh = 
-     1                            min(t_gnd_k(i,j),t_sfc_k(i,j)-10.0)       
+     1                            min(t_gnd_k(ig,jg),t_sfc_k(i,j)-10.0)       
                         if(temp_grid_point .lt. temp_thresh)then
-!                       if(temp_grid_point .lt. t_gnd_k(i,j))then
-                            cldcv(itn:itx,jtn:jtx,k)=default_clear_cover ! not in inversion, 
-                                                                    ! clear it out
+!                       if(temp_grid_point .lt. t_gnd_k(ig,jg))then
+                            cldcv(i,j,k)=default_clear_cover ! not in inversion, 
+                                                             ! clear it out
                             iclr = 3
                         endif
                       endif ! IR signature present
@@ -771,8 +766,12 @@ c
 
                 endif ! SAT is warmer than SAO grid point (calc tb8)
 
+!               if(idebug .eq. 1)
+!    1               write(6,'(" tb8/tgnd check 2e ",2f9.3)')
+!    1                           tb8_k(it,jt),t_gnd_k(ig,jg)
+
                 if(idebug .ge. 1)then
-                  write(6,141)i,j,k,t_gnd_k(i,j)
+                  write(6,141)i,j,k,t_gnd_k(ig,jg)
      1                       ,tb8_k(it,jt),tb8_calculated
      1                       ,tb8_k(it,jt)-tb8_calculated,thresh_tb8_clr
      1                       ,cvr_snow(i,j),iclr
@@ -785,6 +784,9 @@ c
  500        enddo ! k (for clearing clouds)
 
           endif ! l_clear_ir
+
+          if(idebug .eq. 1)write(6,'(" tb8/tgnd check 3 ",2f9.3)')
+     1                     tb8_k(it,jt),t_gnd_k(ig,jg)
 
 !         Test if we're confident that a cloud is present and we know where
 !         the cloud top is.
@@ -885,6 +887,9 @@ c
             l_no_sao_vis = .false.
             mode_sao = 0
 
+            if(idebug .eq. 1)write(6,'(" tb8/tgnd check 4 ",2f9.3)')
+     1                       tb8_k(it,jt),t_gnd_k(ig,jg)
+
             if(        ( istat_vis_added_a(i,j) .eq. 1   ! Vis/3.9 Sat present 
      1              .or. istat_39_add_a(i,j)    .eq. 1 )
      1                                .AND.              ! and
@@ -913,7 +918,8 @@ c
               cover=sat_cover
               htbase = ht_sao_base
 
-              if(tb8_k(it,jt) - t_gnd_k(i,j) .lt. -thresh_ir_diff2)then 
+              if(tb8_k(it,jt) - t_gnd_k(ig,jg)
+     1                                    .lt. -thresh_ir_diff2)then 
                   buffer = 2100.             ! We more likely have a cloud
               else                            
                   buffer = surface_ir_buffer ! Weed out IR tops w/higher buffer
@@ -930,25 +936,25 @@ c
               cldtop_m_avg = cldtop_m(i,j)
 
 !             Compare brightness temp to surface temperature
-              if(it .eq. idb .and. jt .eq. jdb)idebug = 1
+              if(i .eq. idb .and. j .eq. jdb)idebug = 1
               if(idebug .eq. 1)then
                  write(6,206,err=207)i,j,it,jt,k_to_c(tb8_cold_k(it,jt))        
-     1                                   ,k_to_c(t_gnd_k(i,j))
-206              format(1x,4i4,' CTR 2nd cloud_top call: tb8_cold/sfc'
+     1                                   ,k_to_c(t_gnd_k(ig,jg))
+206              format(1x,4i4,' CTR 3rd cloud_top call: tb8_cold/sfc'
      1                         ,6x,f8.1,8x,f8.1)
 207           endif
 
               call cloud_top(init_co2,i4time,tb8_cold_k(it,jt),idebug
      1            ,cloud_frac_co2_a(i,j)                                ! I
-     1            ,t_gnd_k,sfc_albedo,pres_sfc_pa
+     1            ,t_gnd_k(ig,jg),sfc_albedo,pres_sfc_pa
      1            ,thresh_ir_diff1,topo(i,j),r_missing_data
      1            ,i,j,imax,jmax,klaps,heights_3d,temp_3d
      1            ,k_terrain(i,j),laps_p
      1            ,istat_39_a(i,j), l_use_39                            ! I
      1            ,istat_39_add_dum,istat_vis_added_dum                 ! O
-     1            ,cloud_frac_vis_a,istat_vis_potl_a(i,j)               ! I
+     1            ,cloud_frac_vis_a(it,jt),istat_vis_potl_a(it,jt)      ! I
      1            ,di_dh_vis(i,j),dj_dh_vis(i,j)                        ! I
-     1            ,cloud_frac_vis_s                                     ! I
+     1            ,cloud_frac_vis_s(it,jt)                              ! I
      1            ,lstat_co2_a(i,j)                                     ! I
      1            ,t_modelfg,sh_modelfg                                 ! I
      1            ,pres_3d                                              ! I
@@ -959,7 +965,7 @@ c
 
 !             Calculate the cover (opacity) given the brightness temperature,
 !             ground temperature, and assumed ambient cloud-top temperature.
-              call get_band8_cover(tb8_k(it,jt),t_gnd_k(i,j)
+              call get_band8_cover(tb8_k(it,jt),t_gnd_k(ig,jg)
      1                          ,tb8_cold_k(it,jt),idebug,cover,istatus)       
               if(istatus .ne. 1)write(6,*)' Bad band8_cover status #1'      
               thk_lyr = cld_thk(cldtop_m(i,j))
@@ -987,6 +993,10 @@ c
      1                                                        )then        
                                              ! Cloud base is below lcl
                                              ! & lcl+thk is higher than ht_sao_top
+
+              if(idebug .eq. 1)write(6,'(" tb8/tgnd check 5 ",2f9.3)')
+     1                         tb8_k(it,jt),t_gnd_k(ig,jg)
+
               mode_sao = 4
               cover=sat_cover
               htbase = lcl_2d(i,j)                     
@@ -1001,7 +1011,7 @@ c
 
                   call correct_cover(cover,cover_new,cldtop_old
      1                              ,cldtop_m(i,j)
-     1                              ,temp_3d,tb8_k(it,jt),t_gnd_k(i,j)
+     1                              ,temp_3d,tb8_k(it,jt),t_gnd_k(ig,jg)
      1                              ,heights_3d
      1                              ,imax,jmax,klaps,i,j,idebug,istatus)       
                   if(istatus .ne. 1)then
@@ -1015,9 +1025,11 @@ c
                       endif
                   endif
                   if(idebug .eq. 1)then
-                      write(6,261)i,j,cover,cover_new
+                      write(6,261)i,j,it,jt,cover,cover_new
      1                           ,cldtop_old,cldtop_m(i,j)
- 261                  format(' mode_sao = 4: i/j/cvrs/tops ',2i4,4f8.2)
+     1                           ,tb8_k(it,jt),t_gnd_k(ig,jg)
+261                   format(' mode_sao = 4: i/j/cvrs/tops/ts '
+     1                                                ,4i4,6f8.2)
                   endif
                   cover = cover_new
               endif ! .true.
@@ -1042,7 +1054,7 @@ c
 
                   call correct_cover(cover,cover_new,cldtop_old
      1                              ,cldtop_m(i,j)
-     1                              ,temp_3d,tb8_k(it,jt),t_gnd_k(i,j)
+     1                              ,temp_3d,tb8_k(it,jt),t_gnd_k(ig,jg)
      1                              ,heights_3d
      1                              ,imax,jmax,klaps,i,j,idebug,istatus)       
                   if(istatus .ne. 1)then
@@ -1064,8 +1076,8 @@ c
 
               if(cldtop_m(i,j) .eq. 0.           .or. 
      1           abs(cldtop_m(i,j)) .gt. 100000.      )then
-                  write(6,*)' WARNING: cldtop_m(i,j) = ',cldtop_m(i,j)
-     1                     ,i,j,mode_sao     
+                  write(6,'(" WARNING: cldtop_m(i,j) = ",f9.3,2i5,i3)')
+     1                                 cldtop_m(i,j),i,j,mode_sao     
               endif
 
               if(htbase .eq. 0.           .or. 
@@ -1107,7 +1119,7 @@ c
             if(idebug .eq. 1)then
                 write(6,302,err=303)i,j,mode_sao,htbase,cover
      1                             ,cldtop_m(i,j),ht_sao_top(i,j)
-     1                             ,l_no_sao_vis,istat_vis_potl_a(i,j)
+     1                             ,l_no_sao_vis,istat_vis_potl_a(it,jt)
 302             format(1x,2i4,' mode_sao =',i2,f7.0,f7.2,2f7.0,l2,i2)       
 303             continue
             endif
@@ -1117,7 +1129,7 @@ c
                 write(6,*)' WARNING: htbase>cldtp = '
      1                   ,htbase,cover,i,j,mode_sao
      1                   ,cldtop_m(i,j),l_no_sao_vis
-     1                   ,istat_vis_potl_a(i,j)
+     1                   ,istat_vis_potl_a(it,jt)
             endif
 
             if(htbase .lt. lcl_2d(i,j))then
@@ -1137,7 +1149,7 @@ c
      1         cover       .le. 0.01              )then
                 write(6,322,err=323)i,j,mode_sao,htbase,cover
      1                   ,cldtop_m(i,j),ht_sao_top(i,j)
-     1                   ,l_no_sao_vis,istat_vis_potl_a(i,j)
+     1                   ,l_no_sao_vis,istat_vis_potl_a(it,jt)
 322             format(1x,2i4,' WARNING: htbase/cover = '
      1                ,i2,f7.0,f7.2,2f7.0,l2,i2)       
                 if(cover .lt. 0.)then
@@ -1162,11 +1174,11 @@ c
                 if(cld_hts(k) .ge. htbase  .and.
      1             cld_hts(k) .le. cldtop_m(i,j) )then ! in satellite layer
                    if(istat_vis_added_a(i,j) .eq. 1)then
-                       it = i - nint(di_dh_vis(i,j) * cldht_prlx)
-                       jt = j - nint(dj_dh_vis(i,j) * cldht_prlx)
+                       it = i + nint(di_dh_vis(i,j) * cldht_prlx)
+                       jt = j + nint(dj_dh_vis(i,j) * cldht_prlx)
                    else
-                       it = i - nint(di_dh_ir(i,j) * cldht_prlx)
-                       jt = j - nint(dj_dh_ir(i,j) * cldht_prlx)
+                       it = i + nint(di_dh_ir(i,j) * cldht_prlx)
+                       jt = j + nint(dj_dh_ir(i,j) * cldht_prlx)
                    endif
                    it = max(min(it,imax),1)
                    jt = max(min(jt,jmax),1)
@@ -1214,9 +1226,10 @@ c
                        endif
                    endif
 
-                   cldcv(itn:itx,jtn:jtx,k)=cover
+!                  cldcv(itn:itx,jtn:jtx,k)=cover
+                   cldcv(i,j,k)=cover
 !                  if(idebug .eq. 1)then
-                   if(itn .eq. idb .AND. jtn .eq. jdb)then
+                   if(i .eq. idb .AND. j .eq. jdb)then
 !                  if(it.eq.660 .and. jt.gt.50 .and. jt.lt.120)then
                        write(6,331)i,j,it,jt,k,cover,cldht_prlx
      1                            ,istat_vis_added_a(i,j)
@@ -1233,6 +1246,8 @@ c
 
           ENDIF ! l_cloud_present (Cloudy) & l_add_ir
 
+         elseif(idebug .eq. 1)then
+            write(6,'("CTR - tb8(it,jt) is missing: ",4i5)')i,j,it,jt
          endif ! tb8_k(it,jt) .ne. r_missing_data
 
         enddo ! imax
@@ -1265,7 +1280,7 @@ c
         n_vis_added = 0
         do i = 1,imax
         do j = 1,jmax
-            n_vis_add_potl = n_vis_add_potl + istat_vis_potl_a(i,j)
+            n_vis_add_potl = n_vis_add_potl + istat_vis_potl_a(it,jt)
             n_vis_added    = n_vis_added    + istat_vis_added_a(i,j)
         enddo ! j
         enddo ! i
@@ -1315,10 +1330,10 @@ c
         integer init_co2                      ! Input
         integer i4time                        ! Input
         real tb8_k                            ! Input
-        real cloud_frac_vis_a(imax,jmax)      ! Input (vis cloud building)
-        real cloud_frac_vis_s(imax,jmax)      ! Input (vis cloud building)
+        real cloud_frac_vis_a                 ! Input (vis cloud building)
+        real cloud_frac_vis_s                 ! Input (vis cloud building)
         integer i,j,imax,jmax,klaps           ! Input
-        real t_gnd_k(imax,jmax)               ! Input
+        real t_gnd_k                          ! Input
         real sfc_albedo(imax,jmax)            ! Input
         real pres_sfc_pa(imax,jmax)           ! Input
         real t_modelfg(imax,jmax,klaps)       ! Input
@@ -1328,6 +1343,7 @@ c
         real topo                             ! Input
         real r_missing_data                   ! Input
         integer istat_vis_potl                ! Input (vis cloud building)
+                                              !       (sat image space)
         real heights_3d(imax,jmax,klaps)      ! Input
         real temp_3d(imax,jmax,klaps)         ! Input
         integer k_terrain                     ! Input
@@ -1390,7 +1406,7 @@ c
 !       This section finds the cloud top using Band 8 data and temperatures
 !       Estimate whether tb8_k - t < threshold
         cldtop_tb8_m = r_missing_data ! zeros
-        if(tb8_k - t_gnd_k(i,j) .lt. -thresh_ir_diff1) then ! probably clds
+        if(tb8_k - t_gnd_k .lt. -thresh_ir_diff1) then ! probably clds
             l_tb8 = .true.
 
         else ! No clouds according to SATELLITE (Band 8 - 11.2mm)
@@ -1405,13 +1421,13 @@ c
      1       (l_use_39 .and. istat_39 .eq. 1)
      1                     .OR. 
      1       (istat_vis_potl .eq. 1 .and. 
-     1        cloud_frac_vis_a(i,j) .ne. r_missing_data)       
+     1        cloud_frac_vis_a .ne. r_missing_data)       
      1                                            )then ! get 11u cloud top
             cldtop_temp_k_before = tb8_k
 
 !           Correct cloud top temperature for thin clouds using VIS data
-            call correct_cldtop_t_rad(tb8_k,t_gnd_k(i,j)               ! I
-     1                           ,cloud_frac_vis_s(i,j)                ! I
+            call correct_cldtop_t_rad(tb8_k,t_gnd_k                    ! I
+     1                           ,cloud_frac_vis_s                     ! I
      1                           ,istat_vis_potl,idebug                ! I
      1                           ,cldtop_temp_k,istat_vis_corr)        ! O
             if(istatus .eq. -1)then
@@ -1511,33 +1527,34 @@ c
 
                 if(temp_3d(i,j,kl_min) .lt. tb8_k)then
                     call correct_cover(cloud_frac_tb8
-     1                  ,cloud_frac_tb8_potl
-     1                  ,cldtop_tb8_m,cldtop_new_potl_m          
-     1                  ,temp_3d,tb8_k,t_gnd_k(i,j)
-     1                  ,heights_3d
-     1                  ,imax,jmax,klaps,i,j,idebug,istatus)
+     1                                ,cloud_frac_tb8_potl
+     1                                ,cldtop_tb8_m,cldtop_new_potl_m          
+     1                                ,temp_3d,tb8_k,t_gnd_k
+     1                                ,heights_3d,imax,jmax
+     1                                ,klaps,i,j,idebug,istatus)
                 else
                     cloud_frac_tb8_potl = cloud_frac_tb8
                 endif
 
-                if(cloud_frac_tb8_potl .ge. 0. .OR.
-     1             cloud_frac_tb8_potl .le. 1.      )then 
+                if((cloud_frac_tb8_potl .ge. 0. .or.
+     1              cloud_frac_tb8_potl .le. 1.) .AND.
+     1                                             istatus .eq. 1)then 
 !                   Set new cloud top and cover
                     cldtop_tb8_m = cldtop_new_potl_m            
                     cloud_frac_tb8 = cloud_frac_tb8_potl
-                else
-                    write(6,*)
-     1       ' WARNING in cloud_top: cloud_frac_tb8_potl out of bounds '       
-     1                              ,cloud_frac_tb8_potl
+                elseif(idebug .eq. 1)then
+                    write(6,131)cloud_frac_tb8_potl,istatus
+131                 format(' WARNING in cloud_top: cloud_frac_tb8_potl '
+     1                    ,'out of bounds or istatus=0 ',f9.3,i2)
                     idebug = 1
                 endif
 
                 if(idebug .eq. 1)then
-                    write(6,131)i,j,kl_min                        
+                    write(6,132)i,j,kl_min                        
      1                     ,costmin_lvl,tb8_k,temp_3d(i,j,kl_min)
      1                     ,cloud_frac_tb8_potl
      1                     ,cldtop_new_potl_m              
-131                 format(' cloud_top: found lower cost function at: '
+132                 format(' cloud_top: found lower cost function at: '
      1                    ,2i6,i4,f12.4,2f8.1,f6.2,f8.0)
                 endif
 
@@ -1582,8 +1599,8 @@ c
             istat_39_add = 1
 
         elseif( (.not. l_tb8) .AND. istat_vis_potl .eq. 1 
-     1                .AND. cloud_frac_vis_a(i,j) .ne. r_missing_data
-     1                .AND. cldtop_tb8_m          .ne. r_missing_data
+     1                .AND. cloud_frac_vis_a .ne. r_missing_data
+     1                .AND. cldtop_tb8_m     .ne. r_missing_data
      1                                                            ) then      
 
 !           Band 8 (11mm) threshold says no but visible says yes
@@ -1597,12 +1614,12 @@ c
             jg = max(min(jg,jmax),1)
 
 !           Test only works if 'sfc_albedo' is set to non-missing value
-            if(cloud_frac_vis_a(i,j) .gt. 
-     1                                 sfc_albedo(ig,jg) + visthr)then       
+!           if(cloud_frac_vis_a .gt. sfc_albedo(ig,jg) + visthr)then       
+            if(cloud_frac_vis_a .gt.                     visthr)then       
                 mode_top = 3
                 l_cloud_present = .true.
                 cldtop_m = cldtop_tb8_m
-                sat_cover = cloud_frac_vis_a(i,j) 
+                sat_cover = cloud_frac_vis_a
                 istat_vis_added = 1
                 if(idebug .eq. 1)then
                     write(6,*)i,j,' visible is being added',ig,jg
@@ -1612,8 +1629,27 @@ c
                 l_cloud_present = .false.
                 sat_cover = 0.
             endif
+
+        elseif( l_tb8 .AND. istat_vis_potl .eq. 1 
+     1                .AND. cloud_frac_vis_a .ne. r_missing_data
+     1                .AND. cldtop_tb8_m     .ne. r_missing_data
+     1                                                            ) then      
+            l_cloud_present = l_tb8
+            cldtop_m = cldtop_tb8_m
+            if(cloud_frac_vis_a .gt. visthr)then       
+                mode_top = 5              ! Possibly use VIS?
+                sat_cover = cloud_frac_vis_a
+                istat_vis_added = 1
+                if(idebug .eq. 1)then
+                    write(6,*)i,j,' visible is being added',ig,jg
+                endif
+            else
+                mode_top = 6              ! Possibly use VIS?
+                sat_cover = cloud_frac_tb8
+            endif
+
         else                          ! Using Band 8 (11.2mm) data only
-            mode_top = 5
+            mode_top = 7
             l_cloud_present = l_tb8
             cldtop_m = cldtop_tb8_m
             sat_cover = cloud_frac_tb8
@@ -1625,7 +1661,8 @@ c
           if(cldtop_m .eq. r_missing_data .OR.
      1       sat_cover .lt. 0.            .OR.
      1       sat_cover .gt. 1.                 )then
-            write(6,*)' ERROR in cloud_top: ',i,j
+            write(6,'(" ERROR in cloud_top: i,j,cldtp_m,sat_cvr",2i5
+     1                         ,f9.3,f9.4)')i,j,cldtop_m,sat_cover
             ierr = 1
             if(sat_cover .gt. 1.)then
                 sat_cover = 1.
@@ -1637,15 +1674,14 @@ c
         endif
 
         if(idebug .eq. 1 .OR. ierr .eq. 1)then
-            write(6,201)i,j,l_cloud_present
-     1               ,mode_top
-     1               ,istat_vis_added,istat_39_add,cldtop_m       
-     1               ,t_gnd_k(i,j),tb8_k,cloud_frac_vis_a(i,j)
-     1               ,cloud_frac_vis_s(i,j),sfc_albedo(ig,jg)
-     1               ,cldtop_temp_k,sat_cover
-     1               ,cloud_frac_tb8
- 201        format('cloud_top info: ',2i5,l2,3i2,f9.0,2f9.2,2f7.4,2f9.2
-     1               ,2f7.3)
+            write(6,201)i,j,l_tb8,l_cloud_present,mode_top
+     1             ,istat_vis_potl,istat_vis_added,istat_39_add
+     1             ,cldtop_m,cldtop_tb8_m
+     1             ,tb8_k,t_gnd_k,cloud_frac_vis_a
+     1             ,cloud_frac_vis_s,sfc_albedo(ig,jg)
+     1             ,cldtop_temp_k,sat_cover,cloud_frac_tb8
+ 201        format(' cloud_top info: ',2i5,2l2,4i2,2f9.0,2f9.2      
+     1               ,' vis ',2f7.4,2f9.2,2f7.3)
         endif
 
         return
@@ -1798,9 +1834,9 @@ c
         endif
 
         if(lwrite)then
-            write(6,1,err=2)i,j,t_gnd_k,temp_old,temp_new,cldtop_old
-     1                     ,cldtop_new,cover_in,cover_new,cover_new_f
-1           format(1x,'Corr-cvr t/top/cvr',2i5,3f7.0,2f8.0,3f8.2)
+            write(6,1,err=2)i,j,tb8_k,t_gnd_k,temp_old,temp_new
+     1             ,cldtop_old,cldtop_new,cover_in,cover_new,cover_new_f
+1           format(1x,'Corr-cvr t/top/cvr',2i5,4f7.1,2f8.0,3f8.2)
 2           continue
         endif
 
@@ -2241,9 +2277,10 @@ c
                 if (cldtop_temp_rad .le. 0.0) then
                    if(iwrite .le. 100 .or. idebug .eq. 1)then
                        write(6,*) 'WARNING: cldtop_temp_rad <= 0'
-                       write(6,*) 'tb8_k ',tb8_k, ' tb8_rad ',tb8_rad
-                       write(6,*) 't_gnd_k ',t_gnd_k, ' t_gnd_rad ',
-     1                                                  t_gnd_rad
+                       write(6,'(" tb8_k   ",f9.3,"   tb8_rad  ",f9.3)')
+     1                             tb8_k,             tb8_rad
+                       write(6,'(" t_gnd_k ",f9.3,"   t_gnd_rad",f9.3)')
+     1                             t_gnd_k,           t_gnd_rad
                        write(6,*) 'cloud_frac_vis ',cloud_frac_vis
                        write(6,*) 'cloud_opac_i ',cloud_opac_i
                        iwrite = iwrite + 1
