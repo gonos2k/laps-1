@@ -176,6 +176,7 @@
         write(6,*)' cloud_alb CTR = ',cloud_albedo(idb,jdb)
         write(6,*)' rad_clr   CTR = ',rad_clr(idb,jdb)
         write(6,*)' cvr_scl_a CTR = ',cvr_scl_a(idb,jdb)
+        write(6,'("  cvr_max   CTR =",g12.4)')cvr_max(idb,jdb)
         write(6,*)' cvr_rad   CTR = ',cvr_rad(idb,jdb)
         write(6,*)' swi_2d    CTR = ',swi_2d(idb,jdb)
 
