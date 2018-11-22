@@ -87,7 +87,7 @@ c      include 'lapsparms.cmn'
       
       integer
      1     ii,jj,kk,iout,
-     1     i4time,
+     1     i4time,i4_elapsed,init_timer,istat,ishow_timer,
      1     istatus,
      1     jstatus(3)
       
@@ -214,6 +214,7 @@ c  code
       write (6,*) 'LQ3 Starting now'
       write (6,*)
 
+      ISTAT = INIT_TIMER()
 
       iout = 1 ! have subroutine generate output files
 
@@ -621,7 +622,7 @@ c     ****   laps cloud data. used for cloud, bl, goes
 
 
 
-
+      I4_elapsed = ishow_timer()
 
 
 
@@ -647,7 +648,7 @@ c     get surface temperature and save pristine array (gt)
 
 
 
-
+      I4_elapsed = ishow_timer()
 
 
 
@@ -744,7 +745,7 @@ c     call the main humidity algorighm with filled state variables
       write(6,*) 'lq3, lh3, and lh4 (1=success)'
       write(6,*) jstatus, ' output matrix'
 
-
+      I4_elapsed = ishow_timer()
 
 c     FINISHED
 
