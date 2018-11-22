@@ -72,7 +72,7 @@ cdis
 !       98-Mar-23        "          Added lvd subdirectory flexibility.
 
         use mem_namelist, ONLY: MAX_SND_GRID,MAX_SND_LEVELS
-     1                         ,model_fcst_intvl
+     1                         ,model_fcst_intvl,precip_cycle_time
 
         include 'trigd.inc'
 
@@ -2212,7 +2212,7 @@ c
 
              else ! contours
                  if(ilvd .eq. 1)then ! Visible data
-                     if(var_2d.eq.'ALB')then
+                     if(var_2d.eq.'ALB' .or. var_2d .eq. 'SVS')then
                          clow = 0.0
                          chigh = 1.
                          cint = 0.1
@@ -2867,7 +2867,7 @@ c abdel
                         i4time_hour = (i4time_radar+laps_cycle_time/2)      
      1                              /laps_cycle_time * laps_cycle_time
 	            endif
-cabdel	
+c abdel	
                     var_2d = 'LLR'
                     ext = 'lmt'
                     call get_laps_2dgrid(i4time_ref,laps_cycle_time*100       
@@ -3216,7 +3216,7 @@ Cabdel
 
         elseif( c_type(1:2) .eq. 'sa' .or. c_type(1:2) .eq. 'pa' 
      1     .or. c_type(1:2) .eq. 'fa' .or. c_type(1:2) .eq. 's4')then       
-            ipcp_cycle_time = laps_cycle_time
+            ipcp_cycle_time = precip_cycle_time
             if(c_type(1:2) .eq. 'sa')then
                 write(6,1321)
 1321            format('     ','Enter # of Hours of Snow Accumulation,',
