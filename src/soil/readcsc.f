@@ -31,6 +31,8 @@ cdis
 cdis 
          subroutine readcsc(i4time_cur,imax,jmax,cscnew)
 C
+         use mem_namelist, only: laps_cycle_time,precip_cycle_time
+
          integer  imax,jmax
 
          real csc(imax,jmax),lcv(imax,jmax),csctot(imax,jmax)
@@ -48,11 +50,10 @@ c
                snow_total(i,j)=0.0
             enddo
          enddo
-        call get_laps_cycle_time(laps_cycle_time,istatus)
-        if(istatus.ne.1)then
-           write(6,*)'Error - get_laps_cycle_time'
-           return
-        endif
+
+        write(6,'(" laps_cycle_time is   ",i5)')laps_cycle_time
+        write(6,'(" precip_cycle_time is ",i5)')precip_cycle_time
+
         call get_r_missing_data(missval,istatus)
         if(istatus.ne.1)then
            write(6,*)'Error - get_r_missing_data'
@@ -80,7 +81,7 @@ c
            call cv_i4tim_asc_lp(i4time,time,istatus)
 c           if(time(13:14).eq.'13')goto 52
            write(6,101)time
- 101       format(1x,'First csc loop data search time: ',a17)
+ 101       format(1x,'csc laps_cycle_time loop time: ',a17)
 c
 	   CALL GETLAPSLCV(I4TIME,LCV,CSC,IMAX,JMAX,ISTATUS)
 	   IF (ISTATUS .NE. 1)go to 522
@@ -169,10 +170,11 @@ c                    snow total accumulation.
 c Recent snow is given more weight
 c
         i4time=i4time_cur-48*3600
-        ncycle_times=48*int(3600./float(laps_cycle_time))
+        i4time=(i4time/precip_cycle_time) * precip_cycle_time
+        ncycle_times=48*int(3600./float(precip_cycle_time))
         write(6,*)
-        write(6,*)'Accumulate hrly Snow for 48 hour total '
-        write(6,*)'---------------------------------------'
+        write(6,'(" Accumulate Precip Cycle Snow for 48 hour total")')
+        write(6,*) '----------------------------------------------'
 
         do itime=1,ncycle_times
 
@@ -199,7 +201,7 @@ c
              write(6,*)'WARNING - L1S/S01 unavailable'
            endif     
 
-           i4time=i4time+laps_cycle_time
+           i4time=i4time+precip_cycle_time
         enddo
 c
 c Adjust snow cover field based upon snow total. ------
