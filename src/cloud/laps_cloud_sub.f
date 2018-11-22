@@ -1,41 +1,3 @@
-cdis   
-cdis    Open Source License/Disclaimer, Forecast Systems Laboratory
-cdis    NOAA/OAR/FSL, 325 Broadway Boulder, CO 80305
-cdis    
-cdis    This software is distributed under the Open Source Definition,
-cdis    which may be found at http://www.opensource.org/osd.html.
-cdis    
-cdis    In particular, redistribution and use in source and binary forms,
-cdis    with or without modification, are permitted provided that the
-cdis    following conditions are met:
-cdis    
-cdis    - Redistributions of source code must retain this notice, this
-cdis    list of conditions and the following disclaimer.
-cdis    
-cdis    - Redistributions in binary form must provide access to this
-cdis    notice, this list of conditions and the following disclaimer, and
-cdis    the underlying source code.
-cdis    
-cdis    - All modifications to this software must be clearly documented,
-cdis    and are solely the responsibility of the agent making the
-cdis    modifications.
-cdis    
-cdis    - If significant modifications or enhancements are made to this
-cdis    software, the FSL Software Policy Manager
-cdis    (softwaremgr@fsl.noaa.gov) should be notified.
-cdis    
-cdis    THIS SOFTWARE AND ITS DOCUMENTATION ARE IN THE PUBLIC DOMAIN
-cdis    AND ARE FURNISHED "AS IS."  THE AUTHORS, THE UNITED STATES
-cdis    GOVERNMENT, ITS INSTRUMENTALITIES, OFFICERS, EMPLOYEES, AND
-cdis    AGENTS MAKE NO WARRANTY, EXPRESS OR IMPLIED, AS TO THE USEFULNESS
-cdis    OF THE SOFTWARE AND DOCUMENTATION FOR ANY PURPOSE.  THEY ASSUME
-cdis    NO RESPONSIBILITY (1) FOR THE USE OF THE SOFTWARE AND
-cdis    DOCUMENTATION; OR (2) TO PROVIDE TECHNICAL SUPPORT TO USERS.
-cdis   
-cdis
-cdis
-cdis   
-cdis
 
         subroutine laps_cloud_sub(i4time,
      1                        NX_L,NY_L,
@@ -261,8 +223,8 @@ cdis
 
         integer istat_39_a(NX_L,NY_L)
         integer istat_39_add_a(NX_L,NY_L)
-        integer istat_vis_potl_a(NX_L,NY_L)
-        integer istat_vis_added_a(NX_L,NY_L)
+        integer istat_vis_potl_a(NX_L,NY_L)  ! image space
+        integer istat_vis_added_a(NX_L,NY_L) ! gridpoint space?
 
         real cloud_albedo(NX_L,NY_L)    ! Cloud albedo (corrected parallax)
         real cloud_od(NX_L,NY_L)        ! Cloud optical depth
@@ -357,6 +319,12 @@ cdis
 
         write(6,*)' Welcome to the LAPS gridded cloud analysis'
 
+        call get_r_missing_data(r_missing_data,istatus)
+        if (istatus .ne. 1) then
+           write (6,*) 'Error calling get_r_missing_data'
+           stop
+        endif
+
         lstat_radar_3dref_orig_a = .false.
         cloud_albedo = r_missing_data ! initialize
 
@@ -373,12 +341,6 @@ cdis
 
         NX_DIM_LUT = NX_L + I_PERIMETER - 1
         NY_DIM_LUT = NY_L + I_PERIMETER - 1
-
-        call get_r_missing_data(r_missing_data,istatus)
-        if (istatus .ne. 1) then
-           write (6,*) 'Error calling get_r_missing_data'
-           stop
-        endif
 
         default_base     = r_missing_data
         default_top      = r_missing_data
@@ -906,8 +868,25 @@ C READ IN SATELLITE DATA
         enddo
         enddo
 
-        idb = 488 ! (NX_L/2) + 1
-        jdb = 225 ! (NY_L/2) + 1
+!       Yescloud
+        idb = 515
+        jdb = 185
+
+!       Nocloud
+        idb = 516
+        jdb = 188
+
+!       Domain Center
+        idb = (NX_L/2) + 1
+        jdb = (NY_L/2) + 1
+
+!       Nocloud
+        idb = 516
+        jdb = 188
+
+!       Snow Clouds
+        idb = 440
+        jdb = 323
 
         icen = idb
         jcen = jdb
@@ -1252,6 +1231,9 @@ C       INSERT VISIBLE / 3.9u SATELLITE IN CLEARING STEP
      1        ,cloud_albedo,cloud_od,cloud_op                         ! O
      1        ,dbz_max_2d,surface_sao_buffer,istatus)
 
+        else
+            write(6,'(" CTR3 Skipping call to insert_vis")')
+            write(6,'(" CTR3 cloud albedo",g12.4)')cloud_albedo(idb,jdb)
         endif
 
         write(6,491)(heights_3d(idb,jdb,k)
@@ -1647,8 +1629,11 @@ C       EW SLICES
                 tb8_k_offset(i,j) = tb8_k(ioff,joff)
                 if(i .eq. idb .AND. j .eq. jdb)then
                     write(6,*)'tb8_offset',i,j,ioff,joff
-                    write(6,*)'CTR cloud albedo',cloud_albedo(i,j)
-                    write(6,*)'CTR sat albedo  ',sat_albedo(i,j)
+                    write(6,'(" CTR4 cld_frac_vis_a",g12.4)')
+     1                               cloud_frac_vis_a(i,j)
+                    write(6,'(" CTR4 cloud albedo",g12.4)')
+     1                               cloud_albedo(i,j)
+                    write(6,'(" CTR4 sat albedo",g12.4)')sat_albedo(i,j)
                 endif
             enddo ! j
             enddo ! i
