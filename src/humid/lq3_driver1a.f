@@ -100,7 +100,7 @@ c     parameter variables
       integer
      1     istatus,
      1     t_istatus,
-     1     i4time,
+     1     i4time,i4_elapsed,init_timer,istat,ishow_timer,
      1     i4timep,
      1     c_istatus,
      1     save_i4time,
@@ -916,6 +916,8 @@ c     gps data inserstion step (bias correction to gvap only)
 
       istatus_gps = 0
 
+      I4_elapsed = ishow_timer()
+
       if (gps_switch .ge. 1) then
 
          write(6,*) 'Initiate bias correction of gps data'
@@ -935,6 +937,8 @@ c     gvap data insertion step
       endif
 
 c     gvap data acquisition
+
+      I4_elapsed = ishow_timer()
 
       istatus_gvap = 0
       
@@ -961,6 +965,7 @@ c     gvap data acquisition
          write(6,*) 'any adjustment'
       endif
      
+      I4_elapsed = ishow_timer()
          
 c     CHECKING PROCESS OUTPUT
 
@@ -1121,6 +1126,7 @@ c     if cloud dependence is off, then assign c_istatus = 1 to force code to run
          
 c     end report moisture change block
          
+         I4_elapsed = ishow_timer()
          
       else
          
@@ -1189,6 +1195,8 @@ c     *** insert cloud moisture, this section now controled by a switch
 
 c     saturate in cloudy areas.  
 
+         I4_elapsed = ishow_timer()
+
          do k = 1,kk
             write(6,*) lvllm(k),'checking lvllm prior to sat'
             do j = 1,jj
@@ -1199,6 +1207,8 @@ c     saturate in cloudy areas.
                enddo
             enddo
          enddo
+
+         I4_elapsed = ishow_timer()
 
          call check_nan3(data,ii,jj,kk,istatus)
          if(istatus.ne.1)then
@@ -1284,6 +1294,8 @@ c     1              lt1dat(i,j,k)-273.15,t_ref )/1000.
 c     recompute tpw including clouds and supersat corrections
       
       call int_tpw(data,kstart,qs,ps,p_3d,tpw,mdf,ii,jj,kk)
+
+      I4_elapsed = ishow_timer()
       
 c     place the accepted missing data flag in output field
 c     sum over the entire grid for a total water sum value for 
@@ -1340,13 +1352,16 @@ c     check for NaN values and Abort if found
 
 c     ------------------------------ write output section
       if (iout.ne.0) then
-      
+
+      I4_elapsed = ishow_timer()
       
 c     write final 3-d sh field to disk
          commentline = 'maps with clouds and surface effects only'
          call writefile (save_i4time,commentline,mlevel,data,
      1        ii,jj,kk,istatus)
          if(istatus.eq.1)        jstatus(1) = 1
+
+      I4_elapsed = ishow_timer()
          
 c     write total precipitable water field
          call write_lh4 (save_i4time,tpw,bias_one,ii,jj,istatus)
@@ -1364,6 +1379,8 @@ c     write out material in log for Seth
             enddo
             write(6,*) '********** end GPS compare **********'
          endif
+
+      I4_elapsed = ishow_timer()
          
 c     generate lh3 file (RH true, RH liquid)
          if (t_istatus.eq.1) then
@@ -1378,7 +1395,9 @@ c     generate lh3 file (RH true, RH liquid)
          
          
       endif                     !output
-      
+
+      I4_elapsed = ishow_timer()
+
 c---------------------------end write output section
       
       write (6,*) 'Reporting overall changes to moisture'
