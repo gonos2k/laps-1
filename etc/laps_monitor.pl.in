@@ -141,9 +141,9 @@ foreach $model (keys %lapsprds){
         $min_age{vrc} = 0.5;
         $files_per_hour{vrc}=4.0;  # NOWRAD is running here
 
-    }elsif($model eq "WFOJ" || $model eq "WFO5KM"){
-        $min_age_model = 1.5;
-        $fph_model = 1.0;
+    }elsif($model eq "500m_RT" || $model eq "WFO5KM"){
+        $min_age_model = 0.3;
+        $fph_model = 6.0;
 
         $min_age{lga} = 6.0;
         $min_age{lgb} = 6.0;
