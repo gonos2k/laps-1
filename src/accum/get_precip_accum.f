@@ -27,6 +27,7 @@
 !       Local
         real pcp_bkg_m(imax,jmax)      ! background field for gauge analysis
         real closest_radar(imax,jmax)  ! M
+        real temp_col_max(imax,jmax) 
 	character var_req*4
 
         call get_r_missing_data(r_missing_data,istatus)
@@ -90,7 +91,8 @@
         endif
 
 !       Compare to gauge values
-        if(ilaps_cycle_time .le. 3600)then
+        if(ilaps_cycle_time .le. 3600 .and.
+     1    (l_accum_gauge .eqv. .true.) )then
             if(ilaps_cycle_time .lt. 3600)write(6,51)ilaps_cycle_time/60
  51         format('  WARNING: assuming gauge data read in as 1hr'
      1            ,' data is actually every ',i2,' minutes')
@@ -110,14 +112,41 @@
      1                               ,closest_radar,istat_radar    ! I
      1                               ,precip_accum)                ! I/O
         else
-            write(6,*)
-     1            ' Skipping gauge processing given ilaps_cycle_time of'
-     1              ,ilaps_cycle_time
+            write(6,'(" Skipping gauge processing")')
         endif
 
 !       Derive snow accum from overall precip accum field
-!       call get_tcol_max(i4time_radar,i4_tol,imax,jmax,kmax,        ! I
-!    1                             temp_col_max,istatus)             ! O
+        write(6,'(/" Derive overall snow accum")')
+        n_snow_pts = 0
+        n_pcp_pts = 0
+
+        do j = 1,jmax
+        do i = 1,imax
+
+          if(precip_accum(i,j) .ne. 0. .and.
+     1       precip_accum(i,j) .ne. r_missing_data)then
+
+            n_pcp_pts = n_pcp_pts + 1
+            if(n_pcp_pts .eq. 1)then
+              i4_tol = 0
+              call get_tcol_max(i4time_end,i4_tol,imax,jmax,kmax, ! I
+     1                          temp_col_max,istatus)             ! O
+            endif  
+
+            n_snow_pts = n_snow_pts + 1
+            ratio = snow_to_rain_ratio(temp_col_max(i,j))
+            snow_accum(i,j) = precip_accum(i,j) * ratio
+
+            if(n_snow_pts .le. 50  )then
+              write(6,'(" snow accum",2i5,2f9.2)')i,j
+     1                 ,temp_col_max(i,j)-273.15,ratio
+            endif
+          endif
+
+        enddo
+        enddo
+
+        write(6,'(" npts pcp/snow = ",2i5)')n_pcp_pts,n_snow_pts
 
         return
         end
@@ -585,6 +614,8 @@
 !           Get LAPS reflectivities at the surface (or immediately above it)
             write(6,*)
 
+            I4_elapsed = ishow_timer()
+
 !           Repeat read in radar data with low level reflectivities filled in
             call get_ref_base(ref_base,istatus)
             if(istatus .ne. 1)return
@@ -610,6 +641,8 @@
                 istatus = 0
                 return
             endif
+
+            I4_elapsed = ishow_timer()
 
 !           For now, we can change the 'r_missing_data' values to 'ref_base'
             do i = 1,imax
@@ -647,6 +680,7 @@
             enddo ! i
             enddo ! j
 
+            I4_elapsed = ishow_timer()
 
             write(6,*)' Incrementing Snow Accumulation_pd for this scan'
 
@@ -979,6 +1013,7 @@
      1                          temp_col_max,istatus)                ! O
 
         real t_sfc_k(imax,jmax)
+        real td_sfc_k(imax,jmax)
         real pres_sfc_pa(imax,jmax)
         real temp_3d(imax,jmax,kmax)
         real temp_col_max(imax,jmax)
@@ -1038,19 +1073,6 @@
         endif
 
         I4_elapsed = ishow_timer()
-
-        write(6,*)' Getting LT1 Height/Temp' 
-        var_2d = 'HT' 
-        ext = 'lt1'
-
-        call get_laps_3d(i4time_temp
-     1                  ,imax,jmax,kmax,ext,var_2d
-     1                  ,units_2d,comment_2d,height_3d,istatus)
-        if(istatus .ne. 1)then
-            write(6,*)' Warning: LAPS 3D Height not available'       
-            frac_sum = -1.0 ! Turns off the wait loop for more radar
-            return
-        endif
 
         var_2d = 'T3' 
         ext = 'lt1'
