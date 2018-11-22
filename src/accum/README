@@ -2,7 +2,7 @@ MODULE NAME                                              FILENAME
 -----------                                              --------
 
 main                                                     laps_accum.f
-    laps_accum                                           laps_accum_sub.f
+    laps_accum_sub                                       laps_accum_sub.f
         get_precip_inc                                   get_precip_accum.f
             get_precip_radar                                    "
                 get_fracs                                       "
