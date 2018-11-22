@@ -1,41 +1,3 @@
-cdis   
-cdis    Open Source License/Disclaimer, Forecast Systems Laboratory
-cdis    NOAA/OAR/FSL, 325 Broadway Boulder, CO 80305
-cdis    
-cdis    This software is distributed under the Open Source Definition,
-cdis    which may be found at http://www.opensource.org/osd.html.
-cdis    
-cdis    In particular, redistribution and use in source and binary forms,
-cdis    with or without modification, are permitted provided that the
-cdis    following conditions are met:
-cdis    
-cdis    - Redistributions of source code must retain this notice, this
-cdis    list of conditions and the following disclaimer.
-cdis    
-cdis    - Redistributions in binary form must provide access to this
-cdis    notice, this list of conditions and the following disclaimer, and
-cdis    the underlying source code.
-cdis    
-cdis    - All modifications to this software must be clearly documented,
-cdis    and are solely the responsibility of the agent making the
-cdis    modifications.
-cdis    
-cdis    - If significant modifications or enhancements are made to this
-cdis    software, the FSL Software Policy Manager
-cdis    (softwaremgr@fsl.noaa.gov) should be notified.
-cdis    
-cdis    THIS SOFTWARE AND ITS DOCUMENTATION ARE IN THE PUBLIC DOMAIN
-cdis    AND ARE FURNISHED "AS IS."  THE AUTHORS, THE UNITED STATES
-cdis    GOVERNMENT, ITS INSTRUMENTALITIES, OFFICERS, EMPLOYEES, AND
-cdis    AGENTS MAKE NO WARRANTY, EXPRESS OR IMPLIED, AS TO THE USEFULNESS
-cdis    OF THE SOFTWARE AND DOCUMENTATION FOR ANY PURPOSE.  THEY ASSUME
-cdis    NO RESPONSIBILITY (1) FOR THE USE OF THE SOFTWARE AND
-cdis    DOCUMENTATION; OR (2) TO PROVIDE TECHNICAL SUPPORT TO USERS.
-cdis   
-cdis
-cdis
-cdis   
-cdis 
 
         subroutine get_vis(i4time,sol_alt,l_use_vis,l_use_vis_add   ! I
      1                    ,l_use_vis_partial,lat,lon,idb,jdb        ! I
@@ -59,15 +21,16 @@ cdis
         integer ihist_alb(-10:20)
         integer ihist_alb_sfc(-10:20)
         integer ihist_frac_sat(-10:20)
-        integer istat_vis_a(ni,nj)            ! Cloud mask based on VIS
+        integer istat_vis_a(ni,nj)     ! Cloud mask based on VIS (image space)
 
         real lat(ni,nj), lon(ni,nj)
         real sfc_albedo(ni,nj), sfc_albedo_lwrb(ni,nj)
         real static_albedo(ni,nj)   ! Static albedo database
         real sat_data_in(ni,nj)
         real sat_albedo(ni,nj) ! Cloud Albedo from Reflectance/Sfc Alb
+                               ! Image space
         real reflectance(ni,nj)     
-        real cvr_snow(ni,nj)
+        real cvr_snow(ni,nj)   ! Gridpoint space
         real tgd_sfc_k(ni,nj)
         real rlaps_land_frac(ni,nj)
         real topo(ni,nj)
@@ -137,7 +100,7 @@ cdis
             return
         endif
 
-!       Read in albedo data
+!       Read satellite reflectance / albedo data
         ntrys=2
         itry = 1
         istatus = 0
@@ -173,12 +136,25 @@ cdis
             return
         endif
 
-!       Compute parallax info (now being passed in)
+!       Compute parallax info
         write(6,*)' Call get_parallax_info in get_vis (VIS)'
         call get_parallax_info(ni,nj,i4time                              ! I
      1                        ,lat,lon                                   ! I
      1                        ,subpoint_lat_clo,subpoint_lon_clo         ! I
      1                        ,di_dh_vis,dj_dh_vis,i_fill_seams)         ! O
+
+        ridbg = float(idb) - di_dh_vis(idb,jdb) * topo(idb,jdb)
+        rjdbg = float(jdb) - dj_dh_vis(idb,jdb) * topo(idb,jdb)
+
+        idbg = min(max(nint(ridbg),1),ni)
+        jdbg = min(max(nint(rjdbg),1),nj)
+
+        write(6,81)idb,jdb,idbg,idbg,cvr_snow(idbg,jdbg),
+     1             tgd_sfc_k(idb,jdb),sfc_albedo(idb,jdb),
+     1             sfc_albedo_lwrb(idb,jdb),
+     1             static_albedo(idb,jdb),topo(idbg,jdbg)
+81      format(' sncv/tgd/sfalb/sfalwb/stal/topo',4i5,5f8.3,f8.1
+     1                                           ,' CTR (get_sfc_alb)')
 
 !       Possibly 'sfc_albedo_lwrb' should be corrected for parallax        
         if(.false.)then
@@ -189,7 +165,7 @@ cdis
         endif
 
 !       Initial test for missing albedo (and partial data coverage)
-!       Loop in satellite i,j (uncorrected for parallax)
+!       Loop in satellite i,j (image space)
         write(6,*)' solalt_thr_vis = ',solalt_thr_vis
         do i = 1,ni
         do j = 1,nj
@@ -240,22 +216,22 @@ cdis
 
         n_missing_albedo = 0
 
-!       Loop in satellite i,j (uncorrected for parallax)
+!       Loop in satellite i,j (image space)
         do i = 1,ni
         do j = 1,nj
 
-          rig = float(i) + di_dh_vis(i,j) * topo(i,j)
-          rjg = float(j) + dj_dh_vis(i,j) * topo(i,j)
+          rig = float(i) - di_dh_vis(i,j) * topo(i,j)
+          rjg = float(j) - dj_dh_vis(i,j) * topo(i,j)
 
           ig = min(max(nint(rig),1),ni)
           jg = min(max(nint(rjg),1),nj)
 
-!         We will now only use the VIS data if the solar alt exceeds 15 deg
-!         7 degrees now used to allow 30 min slack in data availability
-          if(sol_alt(i,j) .lt. 7.0)then
+!         We will now only use the VIS data if the solar alt > 'vis_alt_thr'
+!         0 degrees now used to allow 30 min slack in data availability
+          if(sol_alt(i,j) .lt. 0.0)then
               if(sat_albedo(i,j) .ne. r_missing_data)then
-                  write(6,*)' Error -  sat_albedo not missing:'
-     1                     ,sol_alt(i,j)
+                  write(6,'(" Error -  sat_albedo not missing:"
+     1                    ,2f8.3)')sol_alt(i,j),sat_albedo(i,j)
                   stop
               endif
 !             sat_albedo(i,j) = r_missing_data
@@ -294,17 +270,6 @@ cdis
               cloud_frac_vis = min(max(cloud_frac_vis,0.),1.)              
             endif
 
-            if(i .eq. idb .and. j .eq. jdb)then
-              if(mode_refl .eq. 0)then
-                write(6,91)clear_albedo,sat_albedo(ig,jg),cloud_frac_vis
-91              format(' clralb/satalb/cf_vis ',3f9.3,' CTR')
-              elseif(mode_refl .eq. 1)then
-                write(6,92)reflectance(ig,jg),sol_alt(ig,jg)
-     1                    ,sat_albedo(ig,jg),clear_albedo,cloud_frac_vis
-92              format(' refl/salt/salb/clralb/cf_vis ',5f9.3,' CTR')
-              endif
-            endif
-
             iscr_frac_sat = nint(cloud_frac_vis*10.)
             iscr_frac_sat = min(max(iscr_frac_sat,-10),20)
             ihist_frac_sat(iscr_frac_sat) = 
@@ -317,13 +282,27 @@ cdis
             cloud_frac_vis_a(i,j) = cloud_frac_vis
 
 !           Is there enough of a signal from the VIS to say a cloud is present?
-!           Consider doing this comparison with parallax info
+!           Consider doing this comparison with parallax info (ig,jg)
             if(       cloud_frac_vis_a(i,j) .gt. visthr
      1          .and. sfc_albedo(i,j) .ne. r_missing_data
 !    1          .and. sfc_albedo(i,j) .le. 0.3 ! test now done in 'cloud_top'
+     1          .and. cvr_snow(ig,jg) .lt. 0.01
      1          .and. l_use_vis_add                         )then
                 istat_vis_a(i,j) = 1
                 icount_vis_add_potl = icount_vis_add_potl + 1
+            endif
+
+            if(i .eq. idb .and. j .eq. jdb)then
+              if(mode_refl .eq. 0)then
+                write(6,91)clear_albedo,sat_albedo(ig,jg),cloud_frac_vis
+91              format(' clralb/satalb/cf_vis ',3f9.3,' CTR')
+              elseif(mode_refl .eq. 1)then
+                write(6,92)reflectance(ig,jg),sol_alt(ig,jg)
+     1                    ,sat_albedo(ig,jg),clear_albedo,cloud_frac_vis
+     1                    ,istat_vis_a(i,j)
+92              format(' refl/salt/salb/clralb/cf_vis/visadd ',5f9.3
+     1                                                       ,i2,' CTR')
+              endif
             endif
 
           else
@@ -536,9 +515,10 @@ cdis
           air_refl = 0.05 ! Approximate Rayleigh for 600nm, near nadir
 
           if(iverbose .eq. 1)then
-            write(6,1)reflectance,solalt_eff
+            write(6,1)reflectance,solalt_eff,sfc_albedo
      1               ,land_refl,air_refl,alb_thk,cloud_albedo
-1           format(' refl/salt/land/air/thk/cldalb ',6f9.3,' CTR')
+1           format(' refl/salt/salb/lrfl/arfl/athk/cldalb ',7f8.3,
+     1             ' CTR (refl_2_alb2)')
           endif
 
         endif
