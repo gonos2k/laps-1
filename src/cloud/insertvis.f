@@ -1,41 +1,3 @@
-cdis   
-cdis    Open Source License/Disclaimer, Forecast Systems Laboratory
-cdis    NOAA/OAR/FSL, 325 Broadway Boulder, CO 80305
-cdis    
-cdis    This software is distributed under the Open Source Definition,
-cdis    which may be found at http://www.opensource.org/osd.html.
-cdis    
-cdis    In particular, redistribution and use in source and binary forms,
-cdis    with or without modification, are permitted provided that the
-cdis    following conditions are met:
-cdis    
-cdis    - Redistributions of source code must retain this notice, this
-cdis    list of conditions and the following disclaimer.
-cdis    
-cdis    - Redistributions in binary form must provide access to this
-cdis    notice, this list of conditions and the following disclaimer, and
-cdis    the underlying source code.
-cdis    
-cdis    - All modifications to this software must be clearly documented,
-cdis    and are solely the responsibility of the agent making the
-cdis    modifications.
-cdis    
-cdis    - If significant modifications or enhancements are made to this
-cdis    software, the FSL Software Policy Manager
-cdis    (softwaremgr@fsl.noaa.gov) should be notified.
-cdis    
-cdis    THIS SOFTWARE AND ITS DOCUMENTATION ARE IN THE PUBLIC DOMAIN
-cdis    AND ARE FURNISHED "AS IS."  THE AUTHORS, THE UNITED STATES
-cdis    GOVERNMENT, ITS INSTRUMENTALITIES, OFFICERS, EMPLOYEES, AND
-cdis    AGENTS MAKE NO WARRANTY, EXPRESS OR IMPLIED, AS TO THE USEFULNESS
-cdis    OF THE SOFTWARE AND DOCUMENTATION FOR ANY PURPOSE.  THEY ASSUME
-cdis    NO RESPONSIBILITY (1) FOR THE USE OF THE SOFTWARE AND
-cdis    DOCUMENTATION; OR (2) TO PROVIDE TECHNICAL SUPPORT TO USERS.
-cdis   
-cdis
-cdis
-cdis   
-cdis
 
         subroutine insert_vis(i4time,clouds_3d,cld_hts
      1      ,topo,cloud_frac_vis_a,sat_albedo,mode_refl,ihist_alb     ! I
@@ -78,6 +40,7 @@ cdis
         logical l_use_39, l_39_clr_2d
         real sat_albedo(ni,nj)        ! Measured from satellite (not used)
         real cloud_albedo(ni,nj)      ! Cloud albedo (from cloud_frac_vis_a)
+                                      ! Parallax corrected (gridpoint space)
         real cloud_od(ni,nj)          ! Cloud optical depth
         real cloud_op(ni,nj)          ! Cloud opacity
         real topo(ni,nj)
@@ -97,6 +60,7 @@ cdis
 
 !       This stuff is for reading VIS data from LVD file
         real cloud_frac_vis_a(ni,nj)  ! presently used rather than 'sat_albedo'
+                                      ! uncorrected for parallax (image space)
         integer mxstn
         parameter (mxstn = 100)       ! max number of "stations" in data file
 
@@ -159,6 +123,19 @@ cdis
 !         endif
 !         cldht_prlx_top(i,j) = min(max(cldtop_tb8_m(i,j),8000.),12000.)
 
+          if(mode_prlx .eq. 3)then
+              cldht_prlx = cldht_prlx_top(i,j) ! * 2.
+          elseif(mode_prlx .eq. 2)then
+              cldht_prlx = cldht_prlx_fixed
+          else
+              cldht_prlx = cld_hts(1)
+          endif 
+
+          it = i + nint(di_dh(i,j) * cldht_prlx)
+          jt = j + nint(dj_dh(i,j) * cldht_prlx)
+          it = max(min(it,ni),1)
+          jt = max(min(jt,nj),1)
+
           if(i .eq. idb .AND. j .eq. jdb)then
               idebug = 1
           else
@@ -166,16 +143,16 @@ cdis
           endif
 
 !         Calculate upper bound to cloud cover (through the column)
-          if(cloud_frac_vis_a(i,j) .ne. r_missing_data)then ! VIS (Daytime)
-              albedo_eff = cloud_frac_vis_a(i,j)
+          if(cloud_frac_vis_a(it,jt) .ne. r_missing_data)then ! VIS (Daytime)
+              albedo_eff = cloud_frac_vis_a(it,jt)
               call albedo_to_clouds2(albedo_eff,trans,trans_i
      1                              ,cloud_od(i,j),cloud_od_i
      1                              ,cloud_op(i,j),cloud_op_i)
-              cloud_frac_uprb = cloud_frac_vis_a(i,j)
+              cloud_frac_uprb = cloud_frac_vis_a(it,jt)
 
               if(idebug .eq. 1)then
-                  write(6,51)cloud_frac_vis_a(i,j),albedo_eff
-     1                      ,sat_albedo(i,j),trans,cloud_od(i,j)
+                  write(6,51)cloud_frac_vis_a(it,jt),albedo_eff
+     1                      ,sat_albedo(it,jt),trans,cloud_od(i,j)
      1                      ,cloud_op(i,j),cldht_prlx_top(i,j)
 51                format(' CTR cf_vis/albeff/albsat/trans/od/op/prlx/'
      1                  ,7f9.3)
@@ -225,12 +202,12 @@ cdis
                     cldht_prlx = cld_hts(k)
                 endif 
 
-                it = i - nint(di_dh(i,j) * cldht_prlx)
-                jt = j - nint(dj_dh(i,j) * cldht_prlx)
+                it = i + nint(di_dh(i,j) * cldht_prlx)
+                jt = j + nint(dj_dh(i,j) * cldht_prlx)
                 it = max(min(it,ni),1)
                 jt = max(min(jt,nj),1)
 
-                if(it .eq. idb .AND. jt .eq. jdb)then
+                if(i .eq. idb .AND. j .eq. jdb)then
                   idebug = 1
                 else
                   idebug = 0
@@ -277,10 +254,10 @@ cdis
                   endif
                 endif
 
-                call qc_clouds_0d(i,j,k,clouds_3d(it,jt,k)
+                call qc_clouds_0d(i,j,k,clouds_3d(i,j,k)
      1                           ,ni,nj,.false.)       
 
-                cloud_frac_in = clouds_3d(it,jt,k)
+                cloud_frac_in = clouds_3d(i,j,k)
 
 !               Consider that if 'ir_present_here' is true then cushion
 !               should be non-zero (for high clouds).
@@ -322,7 +299,8 @@ cdis
                    endif
 
                    if(cloud_frac_in - cloud_frac_out .gt. .01)then
-                       if(cloud_frac_vis_a(i,j) .ne. r_missing_data)then
+                       if(cloud_frac_vis_a(it,jt) .ne. r_missing_data
+     1                                                             )then 
                            n_vis_mod = n_vis_mod + 1
                        else
                            n_39_clr = n_39_clr + 1
@@ -359,7 +337,7 @@ cdis
                        n_no_ir = n_no_ir + 1
                    endif
 
-                   clouds_3d_buf(itn:itx,jtn:jtx,k) = cloud_frac_out ! Modify output
+                   clouds_3d_buf(i,j,k) = cloud_frac_out ! Modify output
                    if(idebug .eq. 1)then
                        write(6,202)k,itn,jtn,itx,jtx,ir_present_here
      1                            ,cloud_frac_out,cloud_frac_in,cushion
@@ -510,15 +488,16 @@ cdis
 
           endif ! if upper bound value is missing
 
-          if(cloud_frac_vis_a(i,j) .ne. r_missing_data .and.
+          if(cloud_frac_vis_a(it,jt) .ne. r_missing_data .and.
      1       mode_prlx .eq. 3                                )then
-            cloud_albedo(itn:itx,jtn:jtx) = cloud_frac_vis_a(i,j)
+            cloud_albedo(i,j) = cloud_frac_vis_a(it,jt)
           else
-            cloud_albedo(itn:itx,jtn:jtx) = r_missing_data
+            cloud_albedo(i,j) = r_missing_data
           endif
 
-          if(it .eq. idb .and. jt .eq. jdb)then
-            write(6,*)'CTR it,jt,cla',it,jt,cloud_albedo(it,jt)
+          if(i .eq. idb .and. j .eq. jdb)then
+            write(6,'("CTR i,j,it,jt,cla",4i5,f9.4)')
+     1                     i,j,it,jt,cloud_albedo(i,j)
           endif
 
         enddo ! i
