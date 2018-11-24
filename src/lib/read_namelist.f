@@ -31,6 +31,7 @@ cdoc  Reads static/satellite_lvd.nl file.
 
 !     Initialize
       cchanneltypes = '   '
+      i_qc_sat_flag(:) = 0
 !     solalt_thr_vis = 15.
 
       write(6,*)' Reading LVD namelist in config_satellite_lvd'
