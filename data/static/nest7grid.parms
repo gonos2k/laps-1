@@ -172,6 +172,8 @@ c radarext_3d_accum - Determines input radar source for precip accum analysis.
 c                     Intermediate files used are already on the LAPS grid.
 c                     'xxx' Choose 'vrc' or 'all' automatically based on
 c                           availability and frequency of 'vrc/vrz'.
+c                     'lmt' Use analyzed reflectivity field if analysis cycle
+c                           is frequent enough (e.g. < 15min)
 c                     'vrc' (2d radar data in lapsprd directory [e.g. NOWRAD, 
 c                                                     NEXRAD Lvl 3, narrowband]  )
 c                     'vrz' (radar volume mosaic data)
