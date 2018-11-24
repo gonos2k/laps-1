@@ -17,6 +17,8 @@
 c
 c Further details are in 'src/ingest/satellite/lvd/README'
 c
+c 'NSATS' - number of satellites
+c
 c 'NTYPES' - listed for each satellite
 c
 c 'NCHANNEL' - listed for each satellite
@@ -36,3 +38,6 @@ c 'CCHANNELTYPES' - values can be 'vis', '4u', 'wv', '11u' and
 c                   others for 6.7 micron and 12 micron
 c
 c 'CPATH2SAT' - listed for each satellite
+c
+c 'I_MSNG_SAT_FLAG' - potentially listed for each channel/type/satellite
+c                   - initialized to all zeros if not supplied
