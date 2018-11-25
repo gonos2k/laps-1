@@ -208,6 +208,8 @@ foreach $field (@fields) {
     }
 }
 
+my $field_first = $fields[0];
+
 print "n_fields_uc = $n_fields_uc ";
 print "out_levels = $out_levels ";
 
@@ -391,7 +393,11 @@ if(-e "$laps_data_root/static/nest7grid.parms"){
 
 if ($frames_safe > 1 || $frames_safe =~ "auto"){ 
     if(-e "$laps_data_root/static/nest7grid.parms"){
-        $nl_var="laps_cycle_time";
+        if($field_first eq "PCP_INC" || $field_first eq "SNOW_INC"){
+            $nl_var="precip_cycle_time";
+        }else{
+            $nl_var="laps_cycle_time";
+        }
         @cycle_array=&laps_tools::get_nl_value($domain_nl,$nl_var,$laps_data_root);
         $laps_cycle_time=@cycle_array[0];
 
@@ -2646,6 +2652,18 @@ if($err == 0) {
                         printf LAPSPLOT "$hhmm\n";
                         printf LAPSPLOT "psfi\n"; 
 
+                    }elsif("$field" eq "pcp_inc" ) { 
+                        printf LAPSPLOT "bs\n"; 
+                        printf LAPSPLOT "lgb\n"; 
+                        printf LAPSPLOT "$hhmm\n";
+                        printf LAPSPLOT "r01\n"; 
+
+                    }elsif("$field" eq "PCP_INC" ) { 
+                        printf LAPSPLOT "bs\n"; 
+                        printf LAPSPLOT "lgb\n"; 
+                        printf LAPSPLOT "$hhmm\n";
+                        printf LAPSPLOT "r01i\n"; 
+
                     }elsif("$field" eq "SAT_VIS_ALB" ) { 
                         printf LAPSPLOT "gg\n"; 
                         printf LAPSPLOT "ali\n"; 
@@ -3005,6 +3023,7 @@ if($err == 0) {
                     || $field eq "snow_depth" || $field eq "SNOW_DEPTH" 
                     || $field eq "cld_cvr" || $field eq "CLD_CVR" 
                     || $field eq "cld_base" || $field eq "CLD_BASE" 
+                    || $field eq "sat_vis" 
 #                   || $field eq "sat_11u" || $field eq "SAT_11U" 
                     || $field eq "sw_down" || $field eq "SW_DOWN" 
 #                   || $field eq "umflux" || $field eq "UMFLUX" 
@@ -3103,7 +3122,7 @@ if($err == 0) {
 
                         }elsif("$field" eq "SAT_VIS_ALB"){ 
 
-                           if("$hhmm" =~ "goes" || "$hhmm" =~ "mtsat" || "$hhmm" =~ "meteos" || "$hhmm" =~ "coms") { 
+                           if("$hhmm" =~ "goes" || "$hhmm" =~ "mtsat" || "$hhmm" =~ "meteos" || "$hhmm" =~ "iodc" || "$hhmm" =~ "coms" || "$hhmm" =~ "him" || "$hhmm" =~ "fy") { 
                                printf LAPSPLOT "lv\n"; 
                                printf LAPSPLOT "$hhmm\n"; 
                                printf LAPSPLOT "-1\n"; 
@@ -3121,7 +3140,14 @@ if($err == 0) {
                             printf LAPSPLOT "-1\n"; 
                             printf LAPSPLOT "SVS\n";
 
-                        }elsif("$field" eq "SAT_VIS_NRM"){ 
+                        }elsif("$field" eq "sat_vis"){ 
+                            print " 3113: sat_vis block<br>\n";
+                            printf LAPSPLOT "lv\n"; 
+                            printf LAPSPLOT "$hhmm\n"; 
+                            printf LAPSPLOT "1\n"; 
+                            printf LAPSPLOT "SVS\n";
+
+                       }elsif("$field" eq "SAT_VIS_NRM"){ 
                             printf LAPSPLOT "lv\n"; 
                             printf LAPSPLOT "$hhmm\n"; 
                             printf LAPSPLOT "-1\n"; 
@@ -3652,6 +3678,9 @@ if($err == 0) {
                     elsif("$field" eq "vis_alb"){ 
                         printf LAPSPLOT "lc\n"; 
                         printf LAPSPLOT "alb\n";} 
+                    elsif("$field" eq "SAT_VIS_REFL"){ 
+                        printf LAPSPLOT "lci\n"; 
+                        printf LAPSPLOT "cwt\n";} 
                     elsif("$field" eq "SAT_VIS_ALB"){ 
                         printf LAPSPLOT "lci\n"; 
                         printf LAPSPLOT "alb\n";} 
@@ -3660,11 +3689,9 @@ if($err == 0) {
 #                       printf LAPSPLOT "a\n"; 
                         printf LAPSPLOT "cla\n";} 
                     elsif("$field" eq "CLD_ALB"){ 
-#                       printf LAPSPLOT "cai\n";   # LIL/CLA 
-#                       printf LAPSPLOT "a\n"; 
-#                       printf LAPSPLOT "cla\n";} 
-                        printf LAPSPLOT "svi\n";   # LIL/SMV
-                        printf LAPSPLOT "a\n";} 
+                        printf LAPSPLOT "cai\n";   # LIL 
+                        printf LAPSPLOT "a\n"; 
+                        printf LAPSPLOT "cla\n";} 
                     elsif("$field" eq "cld_alb"){ 
                         printf LAPSPLOT "ca\n";    # LIL 
                         printf LAPSPLOT "a\n"; 
@@ -3727,11 +3754,11 @@ if($err == 0) {
                     elsif("$field" eq "cld_cvr"){ 
                         printf LAPSPLOT "cv\n"; 
                         printf LAPSPLOT "0\n"; }
-                    elsif("$field" eq "REF_MAX"){ 
+                    elsif("$field" eq "REF_MAX"){ # LMR
                         printf LAPSPLOT "rf\n"; 
                         printf LAPSPLOT "mri\n"; }
                     elsif("$field" eq "ref_max"){ 
-                        printf LAPSPLOT "rf\n"; 
+                        printf LAPSPLOT "ra\n"; 
                         printf LAPSPLOT "mr\n"; }
                     elsif("$field" eq "REF_ETOP"){ 
                         printf LAPSPLOT "rf\n"; 
@@ -3792,7 +3819,7 @@ if($err == 0) {
                     elsif("$field" eq "snow_sto"){ 
                         printf LAPSPLOT "sa\n"; 
                         printf LAPSPLOT "-99\n"; }
-                    elsif("$field" eq "REFLCT"){ 
+                    elsif("$field" eq "REFLCT"){  # LMT / LLR
                         printf LAPSPLOT "rf\n"; 
                         printf LAPSPLOT "lri\n"; }
                     elsif("$field" eq "reflct"){ 
@@ -3834,6 +3861,10 @@ if($err == 0) {
                         printf LAPSPLOT "sci\n";} 
                     elsif("$field" eq "snow_cvr"){ 
                         printf LAPSPLOT "sc\n"; }
+                    elsif("$field" eq "SNOW_CVR_SAT"){ 
+                        printf LAPSPLOT "csci\n";} 
+                    elsif("$field" eq "snow_cvr_sat"){ 
+                        printf LAPSPLOT "csc\n"; }
                     elsif("$field" eq "SNOW_DEPTH"){ # L1S
                         printf LAPSPLOT "sdi\n";} 
                     elsif("$field" eq "snow_depth"){ # L1S
@@ -4027,10 +4058,10 @@ if($err == 0) {
                     }elsif("$field" eq "cld_type" ){ 
                         printf LAPSPLOT "tc\n"; 
                     }elsif("$field" eq "REFLCT" ){ 
-                        printf LAPSPLOT "ri\n"; 
+                        printf LAPSPLOT "rii\n"; 
                         printf LAPSPLOT "a\n"; 
                     }elsif("$field" eq "reflct" ){ 
-                        printf LAPSPLOT "rf\n"; 
+                        printf LAPSPLOT "ra\n"; 
                         printf LAPSPLOT "a\n"; 
                     }elsif("$field" eq "pcp_typ" ){ 
                         printf LAPSPLOT "tp\n"; 
@@ -4898,7 +4929,15 @@ if($err == 0) {
   }
   print " 4839: after check for nest7grid.parms $laps_data_root/static/$domain_nl";
 
-  my $aspect_ratio = ($xdim-1.0) / ($ydim-1.0);
+  my $xdim_safe;
+  $xdim =~ /(.*)/;
+  $xdim_safe = $1;
+
+  my $ydim_safe;
+  $ydim =~ /(.*)/;
+  $ydim_safe = $1;
+
+  my $aspect_ratio = ($xdim_safe-1.0) / ($ydim_safe-1.0);
 # print "aspect_ratio is $aspect_ratio<br>\n";
 
   print "sect/window 4 = $sect $window\n";
@@ -4909,7 +4948,14 @@ if($err == 0) {
   if($sect eq "hsect"){
     $x_hw  = 0.5 / $zoom_safe;
 #   if($domain_first eq "co" || $domain_first =~ "co_prl" || $domain_first =~ "ruc20" || $domain_first =~ "t2" || $domain_first =~ "goes"){
-    if($aspect_ratio > 1.40){
+    if($aspect_ratio > 1.70){
+        $res_y=$npix_safe;
+        $res_x=int(0.95*$res_y*$aspect_ratio);
+        $resolution="$res_x"."x"."$res_y";
+        $y_hw  = (0.516 / $aspect_ratio) / $zoom_safe;
+        $ylow_thresh  = 0.15;                         # translate entire view upward
+        $yhigh_thresh = 1.0 - $ylow_thresh;
+    }elsif($aspect_ratio > 1.40){
         $res_y=$npix_safe;
         $res_x=int($res_y*1200./885.);
         $resolution="$res_x"."x"."$res_y";
