@@ -136,26 +136,26 @@ c
         endif
 
         if(l_use_39)then
-            write(6,*)' Getting 3.9 micron satellite data from LVD file'
-            ext = lvd_ext
-            var = 'S3A'
-            ilevel = 0
-            call get_laps_2dvar(i4time_s8a,0       
-     1                         ,i4time_nearest,lat,lon
-     1                         ,subpoint_lat_clo_s3a           ! O
-     1                         ,subpoint_lon_clo_s3a           ! O 
-     1                         ,EXT,var,units
-     1                         ,comment_s3a,imax,jmax,s3a_k,ilevel
-     1                         ,istat_s3a)
-            if(istat_s3a .ne. 1)then
-                write(6,*)' No S3A data available'
-                s3a_k = r_missing_data
-            endif
+          write(6,'(" Getting 3.9u satellite data from LVD file")')
+          ext = lvd_ext
+          var = 'S3A'
+          ilevel = 0
+          call get_laps_2dvar(i4time+i4_sat_window_offset,i4_sat_window      
+     1                       ,i4time_nearest,lat,lon
+     1                       ,subpoint_lat_clo_s3a           ! O
+     1                       ,subpoint_lon_clo_s3a           ! O 
+     1                       ,EXT,var,units
+     1                       ,comment_s3a,imax,jmax,s3a_k,ilevel
+     1                       ,istat_s3a)
+          if(istat_s3a .ne. 1)then
+              write(6,*)' No S3A data available'
+              s3a_k = r_missing_data
+          endif
 
         else
-            write(6,*)' Namelist flag set for not using 3.9u (S3A) data'
-            istat_s3a = 0
-            s3a_k = r_missing_data
+          write(6,'(" Namelist flag set to not use 3.9u (S3A) data")')
+          istat_s3a = 0
+          s3a_k = r_missing_data
 
         endif
 
