@@ -140,6 +140,7 @@
         real cvr_snow_cycle(NX_L,NY_L)
         real cvr_water_temp(NX_L,NY_L)
         real cvr_snow(NX_L,NY_L)
+        real vis_snow_max(NX_L,NY_L)
         real plot_mask(NX_L,NY_L)
         real plot_maskr(NX_L,NY_L)
 
@@ -817,14 +818,16 @@ C READ IN SATELLITE DATA
 !       Positive J offset will shift the image south
 
         where(abs(subpoint_lon_clo_s8a(:,:)-( -75.)) .lt.  8.) ! GOES 16
-            offset_ir_i(:,:)  = +1500./grid_spacing_cen_m
-            offset_ir_j(:,:)  =  +500./grid_spacing_cen_m
+            offset_ir_i(:,:)  = +6500./grid_spacing_cen_m
+            offset_ir_j(:,:)  = -5500./grid_spacing_cen_m
 !           offset_ir_i(:,:)  =  -500./grid_spacing_cen_m
 !           offset_ir_j(:,:)  = +2500./grid_spacing_cen_m
             offset_vis_i(:,:) = -1500./grid_spacing_cen_m
             offset_vis_j(:,:) = +3000./grid_spacing_cen_m
             offset_vis_i(:,:) = -3000./grid_spacing_cen_m
             offset_vis_j(:,:) = +4000./grid_spacing_cen_m
+            offset_vis_i(:,:) = +2000./grid_spacing_cen_m
+            offset_vis_j(:,:) = -2000./grid_spacing_cen_m
         end where
         where(abs(subpoint_lon_clo_s8a(:,:)-(-135.)) .lt. 20.) ! GOES W
             offset_ir_i(:,:)  = -3000./grid_spacing_cen_m
@@ -890,8 +893,8 @@ C READ IN SATELLITE DATA
         jdb = (NY_L/2) + 1
 
 !       Snow Clouds (Plains)
-        idb = 591
-        jdb = 511
+        idb = 850 ! 591
+        jdb =  30 ! 511
 
         icen = idb
         jcen = jdb
@@ -926,6 +929,7 @@ C READ IN SATELLITE DATA
      1              ,di_dh_vis,dj_dh_vis                                 ! O
      1              ,cloud_frac_vis_a,sat_albedo,sat_refl,mode_refl      ! O
      1              ,ihist_alb,static_albedo,sfc_albedo                  ! O
+     1              ,vis_snow_max                                        ! O
      1              ,subpoint_lat_clo_vis,subpoint_lon_clo_vis           ! O 
      1              ,comment_alb                                         ! O
      1              ,NX_L,NY_L,KCLOUD,r_missing_data                     ! O
@@ -1492,9 +1496,10 @@ C       EW SLICES
 
 !       Calculate cloud analysis implied snow cover
         call cloud_snow_cvr(cvr_max,cloud_frac_vis_a,cldtop_tb8_m
-     1          ,tb8_k,topo,di_dh_vis,dj_dh_vis,i_fill_seams,NX_L,NY_L
-     1          ,rlaps_land_frac,tgd_sfc_k
-     1          ,grid_spacing_cen_m,r_missing_data,cvr_snow_cycle)
+     1          ,tb8_k,topo,di_dh_vis,dj_dh_vis,i_fill_seams          ! I
+     1          ,NX_L,NY_L,idb,jdb                                    ! I
+     1          ,rlaps_land_frac,tgd_sfc_k,vis_snow_max               ! I
+     1          ,grid_spacing_cen_m,r_missing_data,cvr_snow_cycle)    ! I/O
 
         I4_elapsed = ishow_timer()
 
@@ -1678,7 +1683,7 @@ C       EW SLICES
 
 !           Offset for navigation though not for parallax
             call move(tb8_k           ,out_array_3d(1,1,4),NX_L,NY_L)
-            call move(t39_k           ,out_array_3d(1,1,5),NX_L,NY_L)
+            call move(t39_k           ,out_array_3d(1,1,5),NX_L,NY_L) ! S3A
             call move(cloud_frac_vis_a,out_array_3d(1,1,6),NX_L,NY_L) ! ALB
 
             call move(cloud_albedo    ,out_array_3d(1,1,7),NX_L,NY_L) ! CLA
@@ -1856,8 +1861,10 @@ C       EW SLICES
 
 
         subroutine cloud_snow_cvr(cvr_max,cloud_frac_vis_a,cldtop_tb8_m
-     1             ,tb8_k,topo,di_dh,dj_dh,i_fill_seams,ni,nj
+     1             ,tb8_k,topo,di_dh,dj_dh,i_fill_seams                ! I
+     1             ,ni,nj,idb,jdb                                      ! I
      1             ,rlaps_land_frac,tgd_sfc_k                          ! I
+     1             ,vis_snow_max                                       ! I
      1             ,grid_spacing_cen_m,r_missing_data,cvr_snow_cycle)
 
         real cvr_max(ni,nj)          ! Input
@@ -1870,6 +1877,7 @@ C       EW SLICES
         real di_dh(ni,nj)            ! Input           
         real dj_dh(ni,nj)            ! Input
         integer i_fill_seams(ni,nj)  ! Input
+        real vis_snow_max(ni,nj)     ! Input
         real cvr_snow_cycle(ni,nj)   ! Output
 
         logical l_cvr_max            ! Local
@@ -1935,24 +1943,13 @@ C       EW SLICES
 !           itx = i
 !           jt = j
 
-            if(        .not. l_cvr_max                          ! No Cld Cover
-!           if(                cvr_max(i,j) .le. 0.1            ! No Cld Cover
-     1          .and. cloud_frac_vis_a(i,j) .ne. r_missing_data
-!    1          .and. cldtop_tb8_m(i,j)     .eq. r_missing_data ! No Band 8 clds
-     1                                                    )then ! Definitely clear
+!           Consider visible satellite
+            if(.not. l_cvr_max)then                             ! No Cld Cover
+                cvr_snow_cycle(i,j) = vis_snow_max(ig,jg)
+            endif
 
-                arg = cloud_frac_vis_a(ig,jg)
-                arg = max(arg,0.)
-                arg = min(arg,1.)
-
-                cvr_snow_cycle(i,j) = arg
-
-                n_csc_pts = n_csc_pts + 1
-
-            else                               ! Cloud Cover or missing albedo
-                cvr_snow_cycle(i,j) = r_missing_data
-                n_no_csc_pts = n_no_csc_pts + 1
-
+            if(vis_snow_max(ig,jg) .lt. 0.2)then
+                cvr_snow_cycle(i,j) = 0.
             endif
 
             if(rlaps_land_frac(i,j) .le. 0.25 .and. 
@@ -1981,6 +1978,13 @@ C       EW SLICES
               else
                 cvr_snow_cycle(i,j) = (274.15-tgd_sfc_k(i,j))/2.
               endif
+            endif
+
+            if(i .eq. idb .and. j .eq. jdb)then
+                write(6,11)idb,jdb,l_cvr_max,vis_snow_max(i,j)
+     1                    ,tb8_k(i,j),cvr_snow_cycle(i,j)
+11              format(2i5,' vssnmx/tb8/cvsncyc',l2,f8.3,f8.1,f8.3
+     1                     ' CTR (cvr_snw_cyc)')
             endif
 
         enddo ! j
