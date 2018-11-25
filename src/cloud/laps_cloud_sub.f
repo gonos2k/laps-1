@@ -200,6 +200,7 @@
         real t39_k(NX_L,NY_L)
         real tb8_cold_k(NX_L,NY_L)
         real sat_albedo(NX_L,NY_L) ! Cloud Albedo from Reflectance/Sfc Alb
+        real sat_refl(NX_L,NY_L)   ! Satellite reflectance
         real static_albedo(NX_L,NY_L)              ! Static albedo database
         real sfc_albedo(NX_L,NY_L)           
         real cloud_frac_vis_a(NX_L,NY_L) ! Cloud albedo with clear alb subtracted
@@ -876,17 +877,21 @@ C READ IN SATELLITE DATA
         idb = 516
         jdb = 188
 
-!       Domain Center
-        idb = (NX_L/2) + 1
-        jdb = (NY_L/2) + 1
-
 !       Nocloud
         idb = 516
         jdb = 188
 
-!       Snow Clouds
+!       Snow Clouds (Mtns)
         idb = 440
         jdb = 323
+
+!       Domain Center
+        idb = (NX_L/2) + 1
+        jdb = (NY_L/2) + 1
+
+!       Snow Clouds (Plains)
+        idb = 591
+        jdb = 511
 
         icen = idb
         jcen = jdb
@@ -919,7 +924,7 @@ C READ IN SATELLITE DATA
      1              ,cvr_snow,tgd_sfc_k                                  ! I
      1              ,offset_vis_i,offset_vis_j                           ! I
      1              ,di_dh_vis,dj_dh_vis                                 ! O
-     1              ,cloud_frac_vis_a,sat_albedo,mode_refl               ! O
+     1              ,cloud_frac_vis_a,sat_albedo,sat_refl,mode_refl      ! O
      1              ,ihist_alb,static_albedo,sfc_albedo                  ! O
      1              ,subpoint_lat_clo_vis,subpoint_lon_clo_vis           ! O 
      1              ,comment_alb                                         ! O
@@ -1659,26 +1664,26 @@ C       EW SLICES
             units_a(9) = 'W/M**2'
             comment_a(1) = 'LAPS Cloud Cover'
             comment_a(2) = 'LAPS Cloud Analysis Implied Snow Cover'
-            comment_a(3) = 'LAPS Clear Sky Water Temp'
+            comment_a(3) = 'Satellite Reflectance'
             comment_a(4) = comment_tb8
             comment_a(5) = comment_t39
-            comment_a(6) = comment_alb     ! ALB
-            comment_a(7) = 'Cloud Albedo'  ! CLA
+            comment_a(6) = 'Cloud-frac-vis-a'      ! ALB
+            comment_a(7) = 'Cloud-albedo    '      ! CLA
             comment_a(8) = 'LAPS Radar Quality'
             comment_a(9) = 'Downward Solar Radiation'
 
             call move(cvr_max       ,out_array_3d(1,1,1),NX_L,NY_L)
             call move(cvr_snow_cycle,out_array_3d(1,1,2),NX_L,NY_L)
-            call move(cvr_water_temp,out_array_3d(1,1,3),NX_L,NY_L)
+            call move(sat_refl      ,out_array_3d(1,1,3),NX_L,NY_L)
 
 !           Offset for navigation though not for parallax
-            call move(tb8_k         ,out_array_3d(1,1,4),NX_L,NY_L)
-            call move(t39_k         ,out_array_3d(1,1,5),NX_L,NY_L)
-            call move(sat_albedo    ,out_array_3d(1,1,6),NX_L,NY_L) ! ALB
+            call move(tb8_k           ,out_array_3d(1,1,4),NX_L,NY_L)
+            call move(t39_k           ,out_array_3d(1,1,5),NX_L,NY_L)
+            call move(cloud_frac_vis_a,out_array_3d(1,1,6),NX_L,NY_L) ! ALB
 
-            call move(cloud_albedo  ,out_array_3d(1,1,7),NX_L,NY_L) ! CLA
-            call move(rqc_2d        ,out_array_3d(1,1,8),NX_L,NY_L)
-            call move(swi_2d        ,out_array_3d(1,1,9),NX_L,NY_L)
+            call move(cloud_albedo    ,out_array_3d(1,1,7),NX_L,NY_L) ! CLA
+            call move(rqc_2d          ,out_array_3d(1,1,8),NX_L,NY_L)
+            call move(swi_2d          ,out_array_3d(1,1,9),NX_L,NY_L)
 
             call put_laps_multi_2d(i4time,ext,var_a,units_a,
      1              comment_a,out_array_3d,NX_L,NY_L,9,istatus)
@@ -1886,6 +1891,7 @@ C       EW SLICES
 
         write(6,*)' Snow cover perimeter is ',ip
 
+!       Loop in gridpoint space
         do i = 1,ni
         do j = 1,nj
 
@@ -1909,6 +1915,11 @@ C       EW SLICES
             endif
 
 !           Add parallax correction to snow cover
+            ig = i + nint(di_dh(i,j) * topo(i,j))
+            jg = j + nint(dj_dh(i,j) * topo(i,j))
+            ig = max(min(ig,ni),1)
+            jg = max(min(jg,nj),1)
+
             it = i - nint(di_dh(i,j) * topo(i,j))
             jt = j - nint(dj_dh(i,j) * topo(i,j))
             it = max(min(it,ni),1)
@@ -1930,16 +1941,16 @@ C       EW SLICES
 !    1          .and. cldtop_tb8_m(i,j)     .eq. r_missing_data ! No Band 8 clds
      1                                                    )then ! Definitely clear
 
-                arg = cloud_frac_vis_a(i,j)
+                arg = cloud_frac_vis_a(ig,jg)
                 arg = max(arg,0.)
                 arg = min(arg,1.)
 
-                cvr_snow_cycle(itn:itx,jt) = arg
+                cvr_snow_cycle(i,j) = arg
 
                 n_csc_pts = n_csc_pts + 1
 
             else                               ! Cloud Cover or missing albedo
-                cvr_snow_cycle(itn:itx,jt) = r_missing_data
+                cvr_snow_cycle(i,j) = r_missing_data
                 n_no_csc_pts = n_no_csc_pts + 1
 
             endif
@@ -1956,7 +1967,7 @@ C       EW SLICES
             if(tb8_k(i,j) .ne. r_missing_data
      1       .and.        tb8_k(i,j) .gt. tb8_snow_thr
      1       .and.        cvr_max(i,j) .le. 0.1     )then
-                cvr_snow_cycle(itn:itx,jt) = 0.
+                cvr_snow_cycle(i,j) = 0.
             endif
 
 !           If no IR set snow cover based on ocean "ground" temp
@@ -1964,11 +1975,11 @@ C       EW SLICES
      1         iocean .eq. 1                  .AND. 
      1         tgd_sfc_k(i,j) .ne. r_missing_data   )then
               if(tgd_sfc_k(i,j) .gt. 274.15)then      
-                cvr_snow_cycle(itn:itx,jt) = 0.
+                cvr_snow_cycle(i,j) = 0.
               elseif(tgd_sfc_k(i,j) .lt. 272.15)then
-                cvr_snow_cycle(itn:itx,jt) = 1.
+                cvr_snow_cycle(i,j) = 1.
               else
-                cvr_snow_cycle(itn:itx,jt) = (274.15-tgd_sfc_k(i,j))/2.
+                cvr_snow_cycle(i,j) = (274.15-tgd_sfc_k(i,j))/2.
               endif
             endif
 
