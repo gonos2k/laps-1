@@ -475,15 +475,15 @@ print <<"EOF";
 <option $selected{'SAT_WV'}>  SAT_WV
 <option $selected{'SAT_39U'}> SAT_39U
 <option $selected{'SAT_D39'}> SAT_D39
-<option $selected{'SAT_VIS'}> SAT_VIS
+<option $selected{'SAT_VIS_REFL'}> SAT_VIS_REFL
 <option $selected{'SAT_VIS_ALB'}> SAT_VIS_ALB
-<option $selected{'SAT_VIS_NRM'}> SAT_VIS_NRM
 <option $selected{'SE_FLUX'}> SE_FLUX
 <option $selected{'SFCT'}> SFCT
 <option $selected{'SH'}> SH
 <option $selected{'SNOW_INC'}> SNOW_INC
 <option $selected{'SNOW_STO'}> SNOW_STO
 <option $selected{'SNOW_CVR'}> SNOW_CVR
+<option $selected{'SNOW_CVR_SAT'}> SNOW_CVR_SAT
 <option $selected{'SNOW_DEPTH'}> SNOW_DEPTH
 <option $selected{'SW_DOWN'}> SW_DOWN
 <option $selected{'SW_OUT'}> SW_OUT
@@ -552,6 +552,7 @@ print <<"EOF";
 <option $selected{'sat_11u'}> sat_11u
 <option $selected{'sat_wv'}>  sat_wv
 <option $selected{'sat_d39'}> sat_d39
+<option $selected{'sat_vis_refl'}> sat_vis_refl
 <option $selected{'sat_vis_alb'}> sat_vis_alb
 <option $selected{'sfct'}> sfct
 <option $selected{'sh'}> sh
