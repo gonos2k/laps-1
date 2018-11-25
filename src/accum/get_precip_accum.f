@@ -624,43 +624,55 @@
  
             ext = '                               '
             ext(1:3) = ext_local
-            call read_radar_3dref_new(i4time_radar,             ! I
-     1       i4_tol_radar,i4_ret,                               ! I/O
-     1       .true.,r_missing_data,imax,jmax,kmax,              ! I
-     1       ext,lat,lon,topo,
-     1       .true.,.false.,
-     1       height_3d,
-     1       grid_ra_ref,
-     1       closest_radar,                                     ! O
-     1       rlat_radar,rlon_radar,rheight_radar,radar_name,
-     1       n_ref,istatus_2dref,istatus_3dref)
 
-            if(istatus_2dref .eq. 0)then
-                write(6,*)' Error in reading radar data in PRECIP ACCUM'
-                frac_sum = -1.0 ! Turns off the wait loop for more radar
-                istatus = 0
-                return
-            endif
+            if(ext(1:3) .ne. 'lmt')then
 
-            I4_elapsed = ishow_timer()
+                call read_radar_3dref_new(i4time_radar,             ! I
+     1           i4_tol_radar,i4_ret,                               ! I/O
+     1           .true.,r_missing_data,imax,jmax,kmax,              ! I
+     1           ext,lat,lon,topo,
+     1           .true.,.false.,
+     1           height_3d,
+     1           grid_ra_ref,
+     1           closest_radar,                                     ! O
+     1           rlat_radar,rlon_radar,rheight_radar,radar_name,
+     1           n_ref,istatus_2dref,istatus_3dref)
 
-!           For now, we can change the 'r_missing_data' values to 'ref_base'
-            do i = 1,imax
-            do j = 1,jmax
-            do k = 1,kmax
-                if(grid_ra_ref(i,j,k) .eq. r_missing_data)then
-                    grid_ra_ref(i,j,k) = ref_base
-                else
-                    l_mask_rdr(i,j) = .true.
+                if(istatus_2dref .eq. 0)then
+                  write(6,
+     1             '(" Error in reading radar data in PRECIP ACCUM")')  
+                  frac_sum = -1.0 ! Turns off the wait loop for more radar
+                  istatus = 0
+                  return
                 endif
-            enddo ! k
-            enddo ! j
-            enddo ! i
 
-            write(6,*)' Call get_low_ref'
+                I4_elapsed = ishow_timer()
 
-            call get_low_ref(grid_ra_ref,pres_sfc_pa,imax,jmax,kmax
-     1                      ,dbz_2d)
+!               For now, we can change the 'r_missing_data' values to 'ref_base'
+                do i = 1,imax
+                do j = 1,jmax
+                do k = 1,kmax
+                    if(grid_ra_ref(i,j,k) .eq. r_missing_data)then
+                        grid_ra_ref(i,j,k) = ref_base
+                    else
+                        l_mask_rdr(i,j) = .true.
+                    endif
+                enddo ! k
+                enddo ! j
+                enddo ! i
+
+                write(6,*)' Call get_low_ref'
+
+                call get_low_ref(grid_ra_ref,pres_sfc_pa,imax,jmax,kmax
+     1                          ,dbz_2d)
+            else ! lmt/llr
+!               Read analyzed low level reflectivity
+                var_2d = 'LLR'
+                ext = 'lmt'
+                call get_laps_2d(i4time_radar,ext,var_2d
+     1                ,units_2d,comment_2d,imax,jmax,dbz_2d,istatus)
+                l_mask_rdr(:,:) = .true.
+            endif
 
             write(6,*)' Incrementing Precip Accumulation '
      1               ,'rate for this scan (call zr)'
