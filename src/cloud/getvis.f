@@ -1,18 +1,18 @@
 
-        subroutine get_vis(i4time,sol_alt,l_use_vis,l_use_vis_add   ! I
-     1                    ,l_use_vis_partial,lat,lon,idb,jdb        ! I
-     1                    ,i4_sat_window,i4_sat_window_offset       ! I
-     1                    ,rlaps_land_frac,topo                     ! I
-     1                    ,cvr_snow,tgd_sfc_k                       ! I
-     1                    ,offset_vis_i,offset_vis_j                ! I
-     1                    ,di_dh_vis,dj_dh_vis                      ! O
-     1                    ,cloud_frac_vis_a,sat_albedo,mode_refl    ! O
-     1                    ,ihist_alb,static_albedo,sfc_albedo       ! O
-     1                    ,subpoint_lat_clo,subpoint_lon_clo        ! O 
-     1                    ,comment                                  ! O
-     1                    ,ni,nj,nk,r_missing_data                  ! I
-     1                    ,istat_vis_a                              ! O
-     1                    ,istatus)                                 ! O
+        subroutine get_vis(i4time,sol_alt,l_use_vis,l_use_vis_add        ! I
+     1                    ,l_use_vis_partial,lat,lon,idb,jdb             ! I
+     1                    ,i4_sat_window,i4_sat_window_offset            ! I
+     1                    ,rlaps_land_frac,topo                          ! I
+     1                    ,cvr_snow,tgd_sfc_k                            ! I
+     1                    ,offset_vis_i,offset_vis_j                     ! I
+     1                    ,di_dh_vis,dj_dh_vis                           ! O
+     1                    ,cloud_frac_vis_a,sat_albedo,reflectance       ! O
+     1                    ,mode_refl,ihist_alb,static_albedo,sfc_albedo  ! O
+     1                    ,subpoint_lat_clo,subpoint_lon_clo             ! O 
+     1                    ,comment                                       ! O
+     1                    ,ni,nj,nk,r_missing_data                       ! I
+     1                    ,istat_vis_a                                   ! O
+     1                    ,istatus)                                      ! O
 
 !       Steve Albers 1997 through 2018
 
@@ -66,7 +66,7 @@
         if(grid_spacing_m .ne. 3000.)then ! consider namelist 'mode_refl' parm
             mode_refl = 1 ! 0,1 to use reflectance instead of albedo from LVD       
         else
-            mode_refl = 0
+            mode_refl = 1
         endif
 
 !       Initialize histograms
@@ -149,7 +149,7 @@
         idbg = min(max(nint(ridbg),1),ni)
         jdbg = min(max(nint(rjdbg),1),nj)
 
-        write(6,81)idb,jdb,idbg,idbg,cvr_snow(idbg,jdbg),
+        write(6,81)idb,jdb,idbg,jdbg,cvr_snow(idbg,jdbg),
      1             tgd_sfc_k(idb,jdb),sfc_albedo(idb,jdb),
      1             sfc_albedo_lwrb(idb,jdb),
      1             static_albedo(idb,jdb),topo(idbg,jdbg)
@@ -193,7 +193,7 @@
                     call refl_to_albedo2(reflectance(i,j)              ! I
      1                                  ,sol_alt_sat(i,j)              ! I
      1                                  ,sfc_albedo(i,j),iverbose      ! I
-     1                                  ,cloud_albedo)                 ! O
+     1                                  ,cloud_albedo)                 ! O (CLA)
                 else
                     cloud_albedo = r_missing_data
                 endif
@@ -265,8 +265,12 @@
 !    1                                           ,sat_albedo(ig,jg))
 
 !             Should a Rayleigh correction be included here?
-              cloud_frac_vis = (sat_albedo(i,j) - clear_albedo)
-     1                       / (1.0             - clear_albedo)
+              if(.false.)then
+                  cloud_frac_vis = (sat_albedo(i,j) - clear_albedo)
+     1                           / (1.0             - clear_albedo)
+              else
+                  cloud_frac_vis = sat_albedo(i,j)
+              endif
               cloud_frac_vis = min(max(cloud_frac_vis,0.),1.)              
             endif
 
@@ -300,7 +304,7 @@
                 write(6,92)reflectance(ig,jg),sol_alt(ig,jg)
      1                    ,sat_albedo(ig,jg),clear_albedo,cloud_frac_vis
      1                    ,istat_vis_a(i,j)
-92              format(' refl/salt/salb/clralb/cf_vis/visadd ',5f9.3
+92              format(' refl/salt/salb/clralb/cf_vis/visadd  ',5f8.3
      1                                                       ,i2,' CTR')
               endif
             endif
@@ -494,33 +498,42 @@
 
         include 'trigd.inc'        
 
-        real land_refl
+        real land_refl,land_refl_dir,land_refl_dif
 
 !       Convert reflectance to cloud (+land) albedo
 !       Note that two solutions may be possible with low sun
 !       Sfc_albedo can be accounted for?
 !       This is presently under development and is being called.
 
-        if(.true.)then
-          alb_thn = reflectance           ! modify by phase angle?
-          solalt_eff = max(solalt,6.)
-          alb_thk = reflectance / sind(solalt_eff)
+        pf_land = 2.0 ! approximate for now for low phase angle
+        land_refl_dir = sind(solalt_eff) * 0.9 * sfc_albedo * pf_land ! direct
+        land_refl_dif =                    0.1 * sfc_albedo           ! diffuse
+        land_refl = land_refl_dir + land_refl_dif
 
-          frac_thk = 1.0 ! cloud_albedo
-          frac_thn = 1.0 - frac_thk
+        alb_thn = reflectance           ! modify by phase angle?
+        solalt_eff = max(solalt,6.)
+!       alb_thk = reflectance / sind(solalt_eff)
 
-          cloud_albedo = alb_thn * frac_thn + alb_thk * frac_thk
+        refl_thk = sind(solalt_eff)
+        if(reflectance .gt. land_refl .and. refl_thk .gt. land_refl)then
+            alb_thk = (reflectance - land_refl)
+     1              / (refl_thk    - land_refl)
+        else
+            alb_thk = 0.
+        endif
+        alb_thk = max(alb_thk,0.)
 
-          land_refl = sind(solalt_eff) * sfc_albedo
-          air_refl = 0.05 ! Approximate Rayleigh for 600nm, near nadir
+        frac_thk = 1.0 ! cloud_albedo
+        frac_thn = 1.0 - frac_thk
 
-          if(iverbose .eq. 1)then
+        cloud_albedo = alb_thn * frac_thn + alb_thk * frac_thk
+        air_refl = 0.05 ! Approximate Rayleigh for 600nm, near nadir
+
+        if(iverbose .eq. 1)then
             write(6,1)reflectance,solalt_eff,sfc_albedo
      1               ,land_refl,air_refl,alb_thk,cloud_albedo
 1           format(' refl/salt/salb/lrfl/arfl/athk/cldalb ',7f8.3,
      1             ' CTR (refl_2_alb2)')
-          endif
-
         endif
 
         return
