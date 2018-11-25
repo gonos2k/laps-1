@@ -154,6 +154,8 @@ foreach $model (keys %lapsprds){
         $lso_per_run = 1.0; # Operational Code
 
         $min_age{vrc} = 1.5;
+        $min_age{l1s} = 1.5;
+        $files_per_hour{l1s}=1.0;  # precip_cycle_time
         $files_per_hour{vrc}=4.0;  # Mosaic is running here
 
     }else{                  # (Taiwan/NOS)
