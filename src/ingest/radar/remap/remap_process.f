@@ -394,29 +394,6 @@ c
 
       write(6,*)' REMAP_PROCESS > Looping through rays and gates'
 
-      if(namelist_parms%l_hybrid_first_gate)then
-          if(elevation_deg .lt. 1.0)then     ! < 1.0
-              hybrid_range = 50000.
-          elseif(elevation_deg .lt. 2.0)then ! Between 1.0 and 2.0
-              hybrid_range = 28000.
-          elseif(elevation_deg .lt. 3.0)then ! Between 2.0 and 3.0
-              hybrid_range = 18000.
-          else
-              hybrid_range = 0.
-          endif
-
-          init_ref_gate_hyb = hybrid_range / gate_spacing_m
-          init_ref_gate_actual = max(INITIAL_REF_GATE,init_ref_gate_hyb)       
-
-          write(6,*)
-     1        ' l_hybrid_first_gate flag is set, first range/gate = '      
-     1        ,hybrid_range,init_ref_gate_actual
-
-      else
-          init_ref_gate_actual = INITIAL_REF_GATE
-
-      endif
-
       azimuth_interval = 360. / float(lut_azimuths)
       write(6,*)' azimuth_interval = ',azimuth_interval
 
@@ -432,6 +409,35 @@ c
             nazi = mod(nazi,lut_azimuths)
         else
             goto200
+        endif
+
+        if(namelist_parms%l_hybrid_first_gate)then
+          if(elevation_deg .lt. 1.0)then     ! < 1.0
+              hybrid_range = 100000. ! 80000.
+          elseif(elevation_deg .lt. 2.0)then ! Between 1.0 and 2.0
+              hybrid_range = 60000. ! 60000.
+          elseif(elevation_deg .lt. 3.0)then ! Between 2.0 and 3.0
+              hybrid_range = 28000. ! 30000.
+          else
+              hybrid_range = 0.
+          endif
+
+          init_ref_gate_hyb = hybrid_range / gate_spacing_m
+
+          if(abs(az_array(jray) - 250.) .lt. 80.)then ! higher terrain
+              init_ref_gate_actual = max(INITIAL_REF_GATE
+     1                                  ,init_ref_gate_hyb)       
+          else
+              init_ref_gate_actual = INITIAL_REF_GATE
+          endif
+
+!         write(6,*)
+!    1        ' l_hybrid_first_gate flag is set, first range/gate = '      
+!    1        ,hybrid_range,init_ref_gate_actual
+
+        else
+          init_ref_gate_actual = INITIAL_REF_GATE
+
         endif
 
         igate_interval=1
