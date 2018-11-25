@@ -8,6 +8,7 @@
      1                    ,di_dh_vis,dj_dh_vis                           ! O
      1                    ,cloud_frac_vis_a,sat_albedo,reflectance       ! O
      1                    ,mode_refl,ihist_alb,static_albedo,sfc_albedo  ! O
+     1                    ,vis_snow_max                                  ! O
      1                    ,subpoint_lat_clo,subpoint_lon_clo             ! O 
      1                    ,comment                                       ! O
      1                    ,ni,nj,nk,r_missing_data                       ! I
@@ -30,7 +31,8 @@
         real sat_albedo(ni,nj) ! Cloud Albedo from Reflectance/Sfc Alb
                                ! Image space
         real reflectance(ni,nj)     
-        real cvr_snow(ni,nj)   ! Gridpoint space
+        real cvr_snow(ni,nj)       ! Gridpoint space
+        real vis_snow_max(ni,nj)   ! Gridpoint space
         real tgd_sfc_k(ni,nj)
         real rlaps_land_frac(ni,nj)
         real topo(ni,nj)
@@ -193,6 +195,7 @@
                     call refl_to_albedo2(reflectance(i,j)              ! I
      1                                  ,sol_alt_sat(i,j)              ! I
      1                                  ,sfc_albedo(i,j),iverbose      ! I
+     1                                  ,vis_snow_max(i,j)             ! O
      1                                  ,cloud_albedo)                 ! O (CLA)
                 else
                     cloud_albedo = r_missing_data
@@ -494,16 +497,19 @@
        
         subroutine refl_to_albedo2(reflectance,solalt,sfc_albedo      ! I
      1                            ,iverbose                           ! I
+     1                            ,vis_snow_max                       ! O
      1                            ,cloud_albedo)                      ! O
 
         include 'trigd.inc'        
 
-        real land_refl,land_refl_dir,land_refl_dif
+        real land_refl,land_refl_dir,land_refl_dif,land_albedo
 
 !       Convert reflectance to cloud (+land) albedo
 !       Note that two solutions may be possible with low sun
 !       Sfc_albedo can be accounted for?
 !       This is presently under development and is being called.
+!       'cloud_albedo' assumes 'sfc_albedo' that may include snow
+!       'snow_albedo' assumes no snow cover and is an upper bound
 
         pf_land = 2.0 ! approximate for now for low phase angle
         land_refl_dir = sind(solalt_eff) * 0.9 * sfc_albedo * pf_land ! direct
@@ -533,7 +539,37 @@
             write(6,1)reflectance,solalt_eff,sfc_albedo
      1               ,land_refl,air_refl,alb_thk,cloud_albedo
 1           format(' refl/salt/salb/lrfl/arfl/athk/cldalb ',7f8.3,
-     1             ' CTR (refl_2_alb2)')
+     1             ' CTR (refl_2_alb_c)')
+        endif
+
+!       Consider snow over dry land
+        land_albedo = 0.15
+        pf_land = 2.0 ! approximate for now for low phase angle
+     
+        snow_albedo = 0.7
+        pf_snow = 1.0 ! approximate for now for low phase angle
+
+        land_refl_dir = sind(solalt_eff) * 0.9 * land_albedo * pf_land ! direct
+        land_refl_dif =                    0.1 * land_albedo           ! diffuse
+        land_refl = land_refl_dir + land_refl_dif
+
+        snow_refl = sind(solalt_eff) * snow_albedo * pf_snow
+        if(reflectance .ge. land_refl .and. snow_refl .gt. land_refl
+     1                                .and. solalt_eff .gt. 10.    )then     
+            vis_snow_max = (reflectance - land_refl)
+     1                   / (snow_refl   - land_refl)
+            vis_snow_max = min(vis_snow_max,1.)            
+        elseif(reflectance .lt. land_refl)then
+            vis_snow_max = 0.
+        else
+            vis_snow_max = 1.
+        endif        
+
+        if(iverbose .eq. 1)then
+            write(6,2)reflectance,solalt_eff,snow_albedo
+     1               ,land_refl,snow_refl,vis_snow_max
+2           format(' refl/salt/salb/lrfl/srfl/vissnwmx',4x,6f8.3,8x,
+     1             ' CTR (refl_2_alb_s)')
         endif
 
         return
