@@ -9,6 +9,12 @@ SRCROOT=../..
 
 include $(SRCROOT)/src/include/makefile.inc
 
+.SUFFIXES:
+.SUFFIXES: .o .c .f .f90 .a .F .i
+.f90.o:;    $(FC) $(FFLAGS) $(FREE) -c $*.f90
+.f.o:;      $(FC) $(FFLAGS) $(FIXED) -c $*.f
+.c.o:;      $(CC) $(CFLAGS) -c $*.c
+
 
 LIB      = liblaps.a
 DEBUGLIB = libdebuglaps.a
@@ -26,8 +32,8 @@ SRC	= machine_dependent.F \
           static_routines.c \
           waiting_c.c  \
           fsystem_dum.f \
-          add.f \
-          addcon.f \
+          add.f90 \
+          addcon.f90 \
           advect.f \
           apply_qc_info.f \
           array_diagnosis.f \
@@ -50,7 +56,7 @@ SRC	= machine_dependent.F \
           convmiles2m.f \
           convms2kt.f \
           csplit.f \
-          diff.f \
+          diff.f90 \
           downcase.f \
           equtoaltazd.f \
           esat1.f \

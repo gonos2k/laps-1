@@ -762,7 +762,7 @@ cdis
 
               if(kmax .gt. 1)then ! 3D field analysis
 
-csms$parallel(grid_dh, <ii>) begin
+!$omp parallel do private(ii,jj)
 
                   if(n_var .eq. 2)then ! wind analysis
                     if(kk .ge. k)then
@@ -888,16 +888,16 @@ csms$parallel(grid_dh, <ii>) begin
                       enddo ! jj
 
                   endif
-csms$parallel end
+!$omp end parallel do
 
               else ! sfc analysis - add in landfrac weight
 
-csms$parallel(grid_dh, <ii>) begin
+!$omp parallel do private(ii,jj)
 !                 weight_landfrac = 1.
                   if(n_var .gt. 1)then
                       stop
-csms$exit
-                  endif
+!$omp barrier
+                      endif
 
                   do jj=jlow,jhigh
                   do ii=ilow,ihigh
@@ -954,7 +954,7 @@ C
 
                   enddo ! ii
                   enddo ! jj
-csms$parallel end
+!$omp end parallel do
 
               endif ! 3D or sfc analysis
           enddo ! k
@@ -967,26 +967,22 @@ csms$parallel end
 !     Divide the weights
       do k=1,kmax
 
-csms$parallel(grid_dh, <i>) begin
+!$omp parallel do private(i,j,l)
           do j=1,jmax
           do i=1,imax
               do l = 1,n_var
                   if(sumwt(i,j,k) + wt_b(i,j,k,l) .eq. 0.)then
-csms$remove begin
-                      var(i,j,k,l) = r_missing_data
-csms$remove end
-csms$insert           var(i,j,k+(l-1)*kmax) = r_missing_data
+! var(i,j,k,l) = r_missing_data
+            var(i,j,k+(l-1)*kmax) = r_missing_data
                   else
-csms$remove begin
-                      var(i,j,k,l)=sum_var(l,i,j,k) * relax
-csms$remove end
-csms$insert           var(i,j,k+(l-1)*kmax)=sum_var(l,i,j,k) * relax
+! var(i,j,k,l)=sum_var(l,i,j,k) * relax
+            var(i,j,k+(l-1)*kmax)=sum_var(l,i,j,k) * relax
      1                          / (sumwt(i,j,k) + wt_b(i,j,k,l))
                   endif
               enddo ! l
           enddo ! i
           enddo ! j
-csms$parallel end
+!$omp end parallel do
 
           write(6,*)' Divided level ',k
 
@@ -1129,8 +1125,8 @@ csms$parallel end
       ncnt_total=0
       weight_total = 0.
 
-csms$insert      call nnt_me(me)
-csms$insert      print *, 'got to arrays_to_barnesobs1 processor=',me       
+! call nnt_me(me)
+! print *, 'got to arrays_to_barnesobs1 processor=',me
 
 !     Count obs and map obs into data structure
       do k=1,kmax
@@ -1171,8 +1167,8 @@ csms$insert      print *, 'got to arrays_to_barnesobs1 processor=',me
       enddo ! j
       enddo ! k
 
-csms$insert      call nnt_me(me)
-csms$insert      print *, 'got to arrays_to_barnesobs2 processor=',me       
+! call nnt_me(me)
+! print *, 'got to arrays_to_barnesobs2 processor=',me
 
       istatus = 1
       return
