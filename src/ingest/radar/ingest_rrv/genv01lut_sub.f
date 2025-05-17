@@ -79,12 +79,8 @@ c -------------------------------------------------------------
       if(istatus.eq.1)then
          write(6,*)'LAPS lat/lon grid obtained'
          write(6,*)
-         do j=1,ny_l
-            do i=1,nx_l
-               lat(i,j)=data(i,j,1)
-               lon(i,j)=data(i,j,2)
-            end do
-         end do
+         lat(:,:) = data(:,:,1)
+         lon(:,:) = data(:,:,2)
       else
          write(6,*)'Error - Unable to get lat/lon data'
          goto 900 
