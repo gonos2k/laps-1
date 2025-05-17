@@ -170,6 +170,7 @@ cdis
       logical  l_3pass          ! Flag for doing 3 pass analysis       ! Input
       logical  l_correct_unfolding ! Flag for dealiasing               ! Input
       logical  l_point_struct, l_variational, l_withheld_only
+      logical missing_flag
 
       real   rms_thresh                                              ! Input
       real   weight_bkg_const                                        ! Input
@@ -812,20 +813,27 @@ csms$serial(default=ignore)  begin
 
       do k=1,kmax ! Add back differences for first pass
 
+      missing_flag = .false.
+!$omp parallel do collapse(2) private(i,j) reduction(.or.:missing_flag)
           do j=1,jmax
           do i=1,imax
-              if(upass1(i,j,k) .ne. r_missing_data)then
-                  upass1(i,j,k) = upass1(i,j,k) + u_laps_bkg(i,j,k)
-                  vpass1(i,j,k) = vpass1(i,j,k) + v_laps_bkg(i,j,k)
-              else
+            if(upass1(i,j,k) .ne. r_missing_data)then
+                upass1(i,j,k) = upass1(i,j,k) + u_laps_bkg(i,j,k)
+                vpass1(i,j,k) = vpass1(i,j,k) + v_laps_bkg(i,j,k)
+            else
                   write(6,*)
      1            ' ERROR: Missing data value(s) detected in first'
      1           ,' pass at lvl',k
-                  istatus = 0
-                  return
+                  missing_flag = .true.
               endif
           enddo ! i
           enddo ! j
+!$omp end parallel do
+
+      if(missing_flag)then
+          istatus = 0
+          return
+      endif
 
 
           if(l_analyze(k) .OR. (.true. .and. icount_radar_total .gt. 0) ! l_3d
@@ -833,6 +841,7 @@ csms$serial(default=ignore)  begin
               write(6,511)k
 511           format(' Use 2nd Pass for lvl',i3)
 
+!$omp parallel do collapse(2) private(i,j)
               do j=1,jmax
               do i=1,imax
                   uanl(i,j,k) = uanl(i,j,k) + u_laps_bkg(i,j,k)
@@ -840,10 +849,12 @@ csms$serial(default=ignore)  begin
 
               enddo ! i
               enddo ! j
+!$omp end parallel do
 
           else
               write(6,512)k
 512           format(' Use 1st Pass for lvl',i3)
+!$omp parallel do collapse(2) private(i,j)
               do j=1,jmax
               do i=1,imax
                   uanl(i,j,k) = upass1(i,j,k)
@@ -851,6 +862,7 @@ csms$serial(default=ignore)  begin
 
               enddo ! i
               enddo ! j
+!$omp end parallel do
 
           endif
       enddo ! k
