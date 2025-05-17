@@ -235,7 +235,7 @@ then
 fi  
 
 dnl  For W3 and CFLAGS, test for MAC (Darwin)
-if test "$arch" = "unknown" 
+if test "$arch" = "unknown" || test "$arch" = "arm64" || test "$arch" = "aarch64"
 then
   if test "`/usr/bin/uname -s`" = "Darwin"
   then
@@ -339,7 +339,8 @@ $FC
 EOF
 if test $? -eq 0
 then
-    FFLAGS="$FFLAGS -fd-lines-as-comments -ffree-line-length-none"
+    FFLAGS="$FFLAGS -fd-lines-as-comments -ffree-line-length-none -finit-local-zero -fallow-argument-mismatch"
+    DBFLAGS="$DBFLAGS -fcheck=all -Wall"
 fi
 
 dnl  Check to see if we are running the lahey
