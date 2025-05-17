@@ -23,6 +23,8 @@
         real rk_terrain(NX_L,NY_L)
 
         logical l_grid_north_out
+        logical bad_interp
+        integer istatus_thr
 
 csms$ignore begin
         write(6,*)' Subroutine wind_post_process...'
@@ -32,19 +34,18 @@ csms$ignore begin
         write(6,*)' Generating interpolated laps surface wind'
 
         i_sfc_bad = 0
+        bad_interp = .false.
 
+!$omp parallel do collapse(2) private(i,j,klow,khigh,fraclow,frachigh,zlow,istatus_thr) reduction(.or.:bad_interp)
         do j = 1,NY_L
         do i = 1,NX_L
 
 !           Interpolate from three dimensional grid to terrain surface
+            istatus_thr = 1
             zlow = height_to_zcoord2(topo(i,j),heights_3d,NX_L,NY_L,NZ_L
-     1                                                  ,i,j,istatus)
-            if(istatus .ne. 1)then
-                write(6,*)' lapswind_anal: error in height_to_zcoord2'
-     1                   ,' in sfc wind interpolation',istatus
-                write(6,*)i,j,zlow,topo(i,j),
-     1                    (heights_3d(i,j,k),k=1,NZ_L)
-                return
+     1                                                  ,i,j,istatus_thr)
+            if(istatus_thr .ne. 1)then
+                bad_interp = .true.
             endif
 
             rk_terrain(i,j) = zlow
@@ -76,8 +77,14 @@ csms$ignore begin
 
         enddo ! j
         enddo ! i
+!$omp end parallel do
 
         I4_elapsed = ishow_timer()
+
+        if(bad_interp)then
+            write(6,*)' lapswind_anal: error in height_to_zcoord2 in sfc wind interpolation'
+            return
+        endif
 
         write(6,*)' Computing Omega'
         call vert_wind(uanl,vanl,uanl_sfcitrp,vanl_sfcitrp                ! I
