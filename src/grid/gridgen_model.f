@@ -41,7 +41,7 @@ C*  version 2b which uses polar stereographic projections. Other      *
 C*  projections have since been added.                                *
 c*                                                                    *
 C*********************************************************************
-c Beginning July 2000, this software was updated to accomodate the    *
+c Beginning July 2000, this software was updated to accommodate the    *
 c WRFSI (Weather Research and Forecasting Standard Initialization)    *
 c grid requirements.  This included adding stagger calculations, and  *
 c map projection factors (map factor and components of coriolis parm, *

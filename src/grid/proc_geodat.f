@@ -9,7 +9,7 @@
 !                    Corrected problems with crossing the dateline
 !                    and constrained albedo to one tile.
 ! J. Smart (NOAA/FSL) : 2003
-!                    Further refined processing of tiles to accomodate
+!                    Further refined processing of tiles to accommodate
 !                    dateline, Greenwich mean, and Poles. Added smoothing
 !                    of temp field (subroutine one_two_one).
 

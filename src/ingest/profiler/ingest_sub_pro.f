@@ -59,7 +59,7 @@ C       NOTE: Profiler winds are written out in KNOTS, and are sorted by HEIGHT
      1         ,file_n_prof
         parameter (max_levels = 72)
         parameter (max_levels_out = 72)
-        parameter (n_profilers = 200) ! Accomodates RSA
+        parameter (n_profilers = 200) ! Accommodates RSA
 
         real u(max_levels),v(max_levels),prs
         real ht_out(max_levels_out),di_out(max_levels_out)
