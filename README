@@ -181,9 +181,15 @@
      LINUX (i386,i686,x86_64)          pgf90 is suggested
                                        ifort (version 12.0.4 or later)
                                        gfortran being tested
-     LINUX (MacOS-X)                   pgf90 is being tested
+    macOS (Intel/x86_64 and Apple Silicon/arm64)
+                                      clang and gfortran supported
      LINUX (Alpha)                     fort is suggested  
 </pre>
+
+    When building on macOS systems, ensure that the `clang` C compiler and
+    `gfortran` are available in your `PATH` (these can be installed via
+    Homebrew).  The configure script now recognizes the `arm64` architecture
+    used by Apple Silicon Macs.
 
      We are working on adding more supported platforms. We welcome suggestions
      on how to modify LAPS for other platforms/versions. Note that we cannot 
