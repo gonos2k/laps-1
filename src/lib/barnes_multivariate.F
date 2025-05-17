@@ -1301,18 +1301,20 @@ C
               weight_term = obs_barnes(n)%weight * vertical_weight 
      1                                           * time_wt      
 
+!$omp parallel do private(ii,jj)
               do jj=jlow,jhigh
               do ii=ilow,ihigh
                   weight = fnorm_lut(ii-i,jj-j) * weight_term
 
                   do l = 1,n_var
-                      sum_var(l,ii,jj,kk) = sum_var(l,ii,jj,kk)       
-     1                                    + (weight*varl(l))       
+                      sum_var(l,ii,jj,kk) = sum_var(l,ii,jj,kk)
+     1                                    + (weight*varl(l))
                   enddo ! l
                   sumwt(ii,jj,kk) = sumwt(ii,jj,kk) + weight
 
               enddo ! ii
               enddo ! jj
+!$omp end parallel do
           enddo ! k
       enddo ! n
 
@@ -1322,18 +1324,20 @@ C
 
 !     Divide the weights
       do k=1,kmax
+!$omp parallel do collapse(2) private(i,j,l)
           do j=1,jmax
           do i=Istart,Iend
               do l = 1,n_var
                   if(sumwt(i,j,k) + wt_b(i,j,k,l) .eq. 0.)then
                       var(i,j,k,l) = r_missing_data
                   else
-                      var(i,j,k,l)=sum_var(l,i,j,k) 
+                      var(i,j,k,l)=sum_var(l,i,j,k)
      1                          / (sumwt(i,j,k) + wt_b(i,j,k,l))
                   endif
               enddo ! l
           enddo ! i
           enddo ! j
+!$omp end parallel do
 
           if(k .eq. 1 .or. k .eq. kmax)then
               write(6,*)' Divided level ',k,Istart,Iend
