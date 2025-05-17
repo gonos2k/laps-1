@@ -33,6 +33,7 @@ csms$ignore begin
 
         i_sfc_bad = 0
 
+!$omp parallel do collapse(2) private(i,j,klow,khigh,fraclow,frachigh,zlow)
         do j = 1,NY_L
         do i = 1,NX_L
 
@@ -76,6 +77,7 @@ csms$ignore begin
 
         enddo ! j
         enddo ! i
+!$omp end parallel do
 
         I4_elapsed = ishow_timer()
 
