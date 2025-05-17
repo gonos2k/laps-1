@@ -255,7 +255,8 @@ int i_status;
 
    }
 
-  fprintf(stdout,buf,"%s","\n");
+  /* Print the command being issued */
+  fprintf(stdout, "%s\n", buf);
 
   p1= popen(buf,"r");  
 
