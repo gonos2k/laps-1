@@ -42,7 +42,7 @@
 *
 *                The need for this routine arises from differences in
 *                memory architecture across different computer platforms.
-*                The two memory configurations that need to be accomodated
+*                The two memory configurations that need to be accommodated
 *                are the "Big Endian" and "Little Endian" architectures.
 *
 *                In the "Big Endian" architecture, the left-most byte in a

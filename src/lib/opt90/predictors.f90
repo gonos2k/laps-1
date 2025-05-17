@@ -616,7 +616,7 @@ CONTAINS
 !                  c.A^3(k) /__
 !                              i=1
 !
-!       To accomodate input LAYER values (i.e. layer average values) from the
+!       To accommodate input LAYER values (i.e. layer average values) from the
 !       NCEP GDAS, the predictor formulations were modified to:
 !
 !                   __ k                        __k-1
@@ -1461,7 +1461,7 @@ CONTAINS
 !                  c.A^3(k) /__
 !                              i=1
 !
-!       To accomodate input LAYER values (i.e. layer average values) from the
+!       To accommodate input LAYER values (i.e. layer average values) from the
 !       NCEP GDAS, the predictor formulations were modified to:
 !
 !                   __ k                        __k-1

@@ -109,7 +109,7 @@
         elseif (nbits.ne.0.AND.idrstmpl(2).eq.0) then
            !
            !  Use minimum number of bits specified by user and
-           !  adjust binary scaling factor to accomodate data.
+           !  adjust binary scaling factor to accommodate data.
            !
            rmin=rmin*dscale
            rmax=rmax*dscale

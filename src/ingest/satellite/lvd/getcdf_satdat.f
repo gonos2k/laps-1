@@ -50,7 +50,7 @@ c
 c J Smart               1/95        
 c J Smart              11/95    removed routine that set r_missing_data. This
 c                               now done in main program.
-c J Smart              12/95    nearly total rewrite to accomodate processing using the
+c J Smart              12/95    nearly total rewrite to accommodate processing using the
 c                               "at" command.
 c J Smart               2/96    incorporate lvis_flag indicating visible availability
 c
