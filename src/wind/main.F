@@ -46,6 +46,7 @@ cdis
       use mem_grid,ONLY:lat,lon,topo
 #ifdef USEMPI
      1                 ,nPEs,rank,IstartIend,recvcounts,displs
+      use mpi_utils
 #endif
 
 !      use mem_wind, wind%uanl->uanl,wind%vanl->vanl,wind%wanl->wanl
@@ -103,38 +104,13 @@ cdis
 
       type (barnesob),allocatable :: obs_barnes(:)
 
-!     Set up the mpi tasks and spit process 0 from the rest
-      call MPI_INIT( ierr )
-      if( ierr /= 0) then
-        print*,'MPI_INIT error',ierr
-        stop
-      endif
-      call MPI_COMM_RANK( MPI_COMM_WORLD, rank, ierr )
-      if( ierr /= 0) then
-        print*,'MPI_COMM_RANK error',ierr
-        stop
-      endif
-      call MPI_COMM_SIZE( MPI_COMM_WORLD, nPEs, ierr )
-      if( ierr /= 0) then
-        print*,'MPI_COMM_SIZE error',ierr,rank
+!     Initialize MPI
+      call mpi_initialize(istat_alloc)
+      if(istat_alloc /= 0) then
+        print*,'MPI initialization error',istat_alloc
         stop
       endif
       print *, 'Process ', Rank, ' of ', nPEs, ' is alive'
-      allocate(IstartIend(2,0:nPEs-1), STAT=istat_alloc )
-      if(istat_alloc .ne. 0)then
-        print*,' ERROR: Could not allocate IstartIend',istat_alloc,rank
-        stop
-      endif
-      allocate(recvcounts(  0:nPEs-1), STAT=istat_alloc )
-      if(istat_alloc .ne. 0)then
-        print*,' ERROR: Could not allocate recvcounts',istat_alloc,rank
-        stop
-      endif
-      allocate(displs    (  0:nPEs-1), STAT=istat_alloc )
-      if(istat_alloc .ne. 0)then
-        print*,' ERROR: Could not allocate displs',istat_alloc,rank
-        stop
-      endif
       if(Rank > 0) then
        call mpi_bcast(IstartIend,2*nPEs,MPI_INTEGER,0,MPI_COMM_WORLD,
      1                                                          ierr)
@@ -290,7 +266,7 @@ cdis
 
          deallocate(wt_b_local,fnorm_lut,obs_barnes,local_var)
        enddo !while
-       call MPI_FINALIZE(ierr)
+       call mpi_finalize()
        stop
       endif !Rank > 0
       print*,'Process',Rank,' is proceeding'
@@ -310,58 +286,10 @@ cdis
 csms$create_decomp(grid_dh, <nx_l>, <0>)
 csms$serial(<r_missing_data, out>:default=ignore)  begin              
 #ifdef USEMPI
-!     Calculate the distribution of points in the I direction on each processor
-      PointsPerPE = NX_L/nPEs
-      if(PointsPerPE < 1) then
-        print*,'Error in main.f'
-        print*,'rank,PointsPerPe,NX_L,nPEs',rank,PointsPerPe,NX_L,nPEs
-        call flush(6)
-        stop
-      endif
-      extra = NX_L - PointsPerPE*nPEs
-      if(extra > 0) then
-        adjust=1
-        extra = extra-1
-      else
-        adjust = 0
-      endif
-      IstartIend(1,0) = 1
-      IstartIend(2,0) = PointsPerPE+adjust
-      do n=1,nPEs-1
-        if(extra > 0) then
-          adjust=1
-          extra = extra-1
-        else
-          adjust = 0
-        endif
-        IstartIend(1,n) = IstartIend(2,n-1)+1
-        IstartIend(2,n) = IstartIend(1,n)+PointsPerPE-1+adjust
-      enddo
-      do n=0,nPEs-1
-        print*,'Distribution:',n,IstartIend(1,n),IstartIend(2,n),NX_L
-      enddo
-      call mpi_bcast(IstartIend,2*nPEs,MPI_INTEGER,0,MPI_COMM_WORLD,
-     1                                                         ierr)
-      if(ierr/=0) then
-        print*,'bcast IstartIend error',rank,2*nPEs,ierr
-        stop
-      endif
-      do n=0,nPEs-1
-        recvcounts(n)=(IstartIend(2,n)-IstartIend(1,n)+1)*NY_L*nk_laps
-     1                                                           *n_var
-      enddo
-      displs(0) = 0
-      do n=1,nPEs-1
-        displs(n) = displs(n-1) + recvcounts(n-1)
-      enddo
-      call mpi_bcast(displs,nPEs,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
-      if( ierr /= 0) then
-        print*,'MPI_BCAST displs',ierr,nPEs,rank
-        stop
-      endif
-      call mpi_bcast(recvcounts,nPEs,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
-      if( ierr /= 0) then
-        print*,'MPI_BCAST recvcounts',ierr,nPEs,rank
+!     Setup MPI domain decomposition and related arrays
+      call setup_mpi_decomposition(NX_L,NY_L,nk_laps,n_var,istat_alloc)
+      if(istat_alloc /= 0) then
+        print*,'MPI decomposition error',istat_alloc,rank
         stop
       endif
 #endif
@@ -493,7 +421,7 @@ csms$serial end
         print*,'MPI_BCAST flag final error',ierr,count,rank
         stop
       endif
-      call MPI_FINALIZE(ierr)
+      call mpi_finalize()
       stop
 #endif
 
