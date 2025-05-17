@@ -5,8 +5,8 @@ INSTALLROOT=@prefix@
 DATAROOT=@datadir@
 CC=@CC@
 
-CFLAGS=@CFLAGS@  @C_OPT@ 
-DBCFLAGS=@CFLAGS@ @DBCFLAGS@ -DDEBUG=1
+CFLAGS=@CFLAGS@  @C_OPT@ -fopenmp 
+DBCFLAGS=@CFLAGS@ @DBCFLAGS@ -DDEBUG=1 -fopenmp
 
 
 
@@ -16,11 +16,11 @@ FC       = @FC@
 #
 NCARGFC  = @NCARGFC@
 
-FFLAGS = @FFLAGS@ $(INC) @F_OPT@
-LITTLEFLAGS = @LITTLEFLAGS@ $(INC) @F_OPT@
+FFLAGS = @FFLAGS@ $(INC) @F_OPT@ -fopenmp
+LITTLEFLAGS = @LITTLEFLAGS@ $(INC) @F_OPT@ -fopenmp
 FREE = @FREE@
 FIXED = @FIXED@
-DBFLAGS = @FFLAGS@ $(INC) @DBFLAGS@ 
+DBFLAGS = @FFLAGS@ $(INC) @DBFLAGS@ -fopenmp 
 
 # Define pre-processor command line options for .F files.
 
