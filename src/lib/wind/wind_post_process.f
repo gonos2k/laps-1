@@ -32,50 +32,60 @@ csms$ignore begin
         write(6,*)' Generating interpolated laps surface wind'
 
         i_sfc_bad = 0
+        logical bad_interp
+        integer istatus_thr
+        bad_interp = .false.
 
+!$omp parallel do collapse(2) private(i,j,klow,khigh,fraclow,frachigh,zlow,istatus_thr) reduction(.or.:bad_interp)
         do j = 1,NY_L
         do i = 1,NX_L
 
 !           Interpolate from three dimensional grid to terrain surface
             zlow = height_to_zcoord2(topo(i,j),heights_3d,NX_L,NY_L,NZ_L
-     1                                                  ,i,j,istatus)
-            if(istatus .ne. 1)then
+     1                                                  ,i,j,istatus_thr)
+            if(istatus_thr .ne. 1)then
                 write(6,*)' lapswind_anal: error in height_to_zcoord2'
-     1                   ,' in sfc wind interpolation',istatus
+     1                   ,' in sfc wind interpolation',istatus_thr
                 write(6,*)i,j,zlow,topo(i,j),
      1                    (heights_3d(i,j,k),k=1,NZ_L)
-                return
-            endif
+                bad_interp = .true.
+            else
+                rk_terrain(i,j) = zlow
 
-            rk_terrain(i,j) = zlow
+                klow = max(zlow,1.)
+                khigh = klow + 1
+                fraclow = float(khigh) - zlow
+                frachigh = 1.0 - fraclow
 
-            klow = max(zlow,1.)
-            khigh = klow + 1
-            fraclow = float(khigh) - zlow
-            frachigh = 1.0 - fraclow
-
-            if( uanl(i,j,klow)  .eq. r_missing_data
+                if( uanl(i,j,klow)  .eq. r_missing_data
      1     .or. vanl(i,j,klow)  .eq. r_missing_data
      1     .or. uanl(i,j,khigh) .eq. r_missing_data
      1     .or. vanl(i,j,khigh) .eq. r_missing_data        )then
 
-                write(6,3333)i,j
-3333            format(' Warning: cannot interpolate to sfc at ',2i3)
-                i_sfc_bad = 1
-                uanl_sfcitrp(i,j) = r_missing_data
-                vanl_sfcitrp(i,j) = r_missing_data
+                    write(6,3333)i,j
+3333                format(' Warning: cannot interpolate to sfc at ',2i3)
+                    i_sfc_bad = 1
+                    uanl_sfcitrp(i,j) = r_missing_data
+                    vanl_sfcitrp(i,j) = r_missing_data
 
-            else
-                uanl_sfcitrp(i,j) = uanl(i,j,klow ) * fraclow
-     1                            + uanl(i,j,khigh) * frachigh
+                else
+                    uanl_sfcitrp(i,j) = uanl(i,j,klow ) * fraclow
+     1                                + uanl(i,j,khigh) * frachigh
 
-                vanl_sfcitrp(i,j) = vanl(i,j,klow ) * fraclow
-     1                            + vanl(i,j,khigh) * frachigh
+                    vanl_sfcitrp(i,j) = vanl(i,j,klow ) * fraclow
+     1                                + vanl(i,j,khigh) * frachigh
+
+                endif
 
             endif
 
         enddo ! j
         enddo ! i
+!$omp end parallel do
+
+        if(bad_interp) then
+            return
+        endif
 
         I4_elapsed = ishow_timer()
 
