@@ -3,6 +3,7 @@
 c
        include 'lapsparms.cmn'
        include 'surface_obs.inc'
+       include '../../include/constants.inc'
        character laps_domain*9
        integer istatus
        logical lrunqc
@@ -1622,19 +1623,19 @@ c
            if(tde(i) .ne. badflag) tde(i) = ((tde(i)-32.) * fon) +273.15  ! conv F to K
            if(tdf(i) .ne. badflag) tdf(i) = ((tdf(i)-32.) * fon) +273.15  ! conv F to K
 
-           if( u(i) .ne. badflag)  u(i) =  u(i) * 0.514791          ! conv kt to m/s
-           if(ua(i) .ne. badflag) ua(i) = ua(i) * 0.514791          ! conv kt to m/s
-           if(ub(i) .ne. badflag) ub(i) = ub(i) * 0.514791          ! conv kt to m/s
-           if(uc(i) .ne. badflag) uc(i) = uc(i) * 0.514791          ! conv kt to m/s
-           if(ue(i) .ne. badflag) ue(i) = ue(i) * 0.514791          ! conv kt to m/s
-           if(uf(i) .ne. badflag) uf(i) = uf(i) * 0.514791          ! conv kt to m/s
+           if( u(i) .ne. badflag)  u(i) =  u(i) * mspkt          ! conv kt to m/s
+           if(ua(i) .ne. badflag) ua(i) = ua(i) * mspkt          ! conv kt to m/s
+           if(ub(i) .ne. badflag) ub(i) = ub(i) * mspkt          ! conv kt to m/s
+           if(uc(i) .ne. badflag) uc(i) = uc(i) * mspkt          ! conv kt to m/s
+           if(ue(i) .ne. badflag) ue(i) = ue(i) * mspkt          ! conv kt to m/s
+           if(uf(i) .ne. badflag) uf(i) = uf(i) * mspkt          ! conv kt to m/s
 c
-           if( v(i) .ne. badflag)  v(i) =  v(i)* 0.514791           ! conv kt to m/s
-           if(va(i) .ne. badflag) va(i) = va(i)* 0.514791           ! conv kt to m/s
-           if(vb(i) .ne. badflag) vb(i) = vb(i)* 0.514791           ! conv kt to m/s
-           if(vc(i) .ne. badflag) vc(i) = vc(i)* 0.514791           ! conv kt to m/s
-           if(ve(i) .ne. badflag) ve(i) = ve(i)* 0.514791           ! conv kt to m/s
-           if(vf(i) .ne. badflag) vf(i) = vf(i)* 0.514791           ! conv kt to m/s
+           if( v(i) .ne. badflag)  v(i) =  v(i)* mspkt           ! conv kt to m/s
+           if(va(i) .ne. badflag) va(i) = va(i)* mspkt           ! conv kt to m/s
+           if(vb(i) .ne. badflag) vb(i) = vb(i)* mspkt           ! conv kt to m/s
+           if(vc(i) .ne. badflag) vc(i) = vc(i)* mspkt           ! conv kt to m/s
+           if(ve(i) .ne. badflag) ve(i) = ve(i)* mspkt           ! conv kt to m/s
+           if(vf(i) .ne. badflag) vf(i) = vf(i)* mspkt           ! conv kt to m/s
 c
            if( pmsl(i) .ne. badflag)  pmsl(i) =  pmsl(i) * 100.     ! conv mb to Pa
            if(pmsla(i) .ne. badflag) pmsla(i) = pmsla(i) * 100.     ! conv mb to Pa  

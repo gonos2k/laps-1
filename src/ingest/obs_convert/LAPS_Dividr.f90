@@ -7,12 +7,9 @@ SUBROUTINE LAPS_DIVIDER
 !	CREATION:	YUANFU XIE	JUN 2007
 !==============================================================================
 
-  CHARACTER :: SYMBOL
-  INTEGER   :: LOOPVR,NCOUNT
+  CHARACTER(LEN=*), PARAMETER :: SYMBOL = '='
+  INTEGER,          PARAMETER :: NCOUNT = 70
 
-  SYMBOL = '='
-  NCOUNT = 70
-
-  WRITE(6,*) (SYMBOL,LOOPVR=1,NCOUNT)
+  WRITE(6,'(A)') REPEAT(SYMBOL,NCOUNT)
 
 END SUBROUTINE LAPS_DIVIDER
